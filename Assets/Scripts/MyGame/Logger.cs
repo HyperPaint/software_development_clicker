@@ -31,6 +31,12 @@ namespace MyGame
         {
         }
 
+        public void Log()
+        {
+            const string defaultError = "Произошло неожиданное событие.";
+            Log(defaultError);
+        }
+
         public void Log(string message)
         {
             lock (mutex)

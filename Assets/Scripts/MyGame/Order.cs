@@ -71,6 +71,7 @@ namespace MyGame
         }
 
 #nullable enable
+        public event Event? OrderUpdated;
         public event Event? DesigningCompleted;
         public event Event? ArtCompleted;
         public event Event? ProgrammingCompleted;
@@ -84,6 +85,9 @@ namespace MyGame
             {
                 TransferWork(ref works.designing, ref designing, ref DesigningCompleted);
                 TransferWork(ref works.fullstack, ref designing, ref DesigningCompleted);
+                OrderUpdated?.Invoke(this);
+                if (designing.completed)
+                    TransferWork(ref works);
             }
             else if (!art.completed || !programming.completed)
             {
@@ -91,17 +95,24 @@ namespace MyGame
                 {
                     TransferWork(ref works.art, ref art, ref ArtCompleted);
                     TransferWork(ref works.fullstack, ref art, ref ArtCompleted);
+                    OrderUpdated?.Invoke(this);
                 }
                 if (!programming.completed)
                 {
                     TransferWork(ref works.programming, ref programming, ref ProgrammingCompleted);
                     TransferWork(ref works.fullstack, ref programming, ref ProgrammingCompleted);
+                    OrderUpdated?.Invoke(this);
                 }
+                if (art.completed && programming.completed)
+                    TransferWork(ref works);
             }
             else if (!testing.completed)
             {
                 TransferWork(ref works.testing, ref testing, ref TestingCompleted);
                 TransferWork(ref works.fullstack, ref testing, ref TestingCompleted);
+                OrderUpdated?.Invoke(this);
+                if (testing.completed)
+                    TransferWork(ref works);
             }
             else
             {

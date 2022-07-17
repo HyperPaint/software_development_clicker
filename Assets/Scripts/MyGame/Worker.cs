@@ -122,8 +122,8 @@ namespace MyGame
                 EmployeeFeature.NONE => (ulong)(workValue),
                 EmployeeFeature.STUDENT => (ulong)(workValue * STUDENT_WORK_MODIFIER),
                 EmployeeFeature.SPECIALIST => (ulong)(workValue * SPECIALIST_WORK_MODIFIER),
-                EmployeeFeature.LAZY => (ulong)(GameModel.Random.Next(1, 100) <= LAZY_WORK_CHANCE ? workValue * LAZY_WORK_MODIFIER : Skill * WORK_PER_SKILL),
-                EmployeeFeature.CREATIVE => (ulong)(GameModel.Random.Next(1, 100) <= CREATIVE_WORK_CHANCE ? workValue / CREATIVE_WORK_MODIFIER : Skill * WORK_PER_SKILL),
+                EmployeeFeature.LAZY => (ulong)(GameModel.Random.Next(1, 100) <= LAZY_WORK_CHANCE ? workValue * LAZY_WORK_MODIFIER : workValue),
+                EmployeeFeature.CREATIVE => (ulong)(GameModel.Random.Next(1, 100) <= CREATIVE_WORK_CHANCE ? workValue / CREATIVE_WORK_MODIFIER : workValue),
                 _ => throw new NotImplementedException(),
             };
         }

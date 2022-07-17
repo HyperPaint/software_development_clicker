@@ -12,7 +12,7 @@ namespace MyGame
         public Unit[] Units { get => units; }
         private List<Order> orders;
         public List<Order> Orders { get => orders; }
-        // todo невозможно купить еду в кухню
+        // todo сейчас невозможно купить еду в кухню
         private OfficeKitchen kitchen;
         public OfficeKitchen Kitchen { get => kitchen; }
         private byte ordersMaxCount;
@@ -70,6 +70,26 @@ namespace MyGame
             {
                 orders.Add(factory.Create());
             }
+        }
+
+        public void GetBuyFoodForKitchenCost()
+        {
+
+        }
+
+        public void GetBuyFoodForKitchenPremiumCost()
+        {
+
+        }
+
+        public void BuyFoodForKitchen()
+        {
+
+        }
+
+        public void BuyFoodForKitchenPremium()
+        {
+
         }
 
         private static readonly float UPGRADE_COST = 5;
