@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,14 +31,7 @@ namespace MyGame
             return factory;
         }
 
-        private OrderFactory()
-        {
-            OrderCreated += (sender, @object) =>
-            {
-                Order order = (Order)@object;
-                Logger.Get().Log("Заказ \"" + order.ToString() + "\" создан");
-            };
-        }
+        private OrderFactory() { }
 
         private readonly string[] names = {
             "Создание игор",
@@ -66,7 +59,7 @@ namespace MyGame
             string name = names[random.Next(0, names.Length - 1)];
             string description = "";
             uint icon = 0;
-            // todo части заказа должны точно от чего-то зависеть
+            // todo части заказа должны зависеть от репутации
             OrderPart designing = new OrderPart(0, (ulong)(random.Next(1, 5) * 100), false);
             OrderPart art = new OrderPart(0, (ulong)(random.Next(1, 5) * 100), false);
             OrderPart programming = new OrderPart(0, (ulong)(random.Next(1, 5) * 100), false);

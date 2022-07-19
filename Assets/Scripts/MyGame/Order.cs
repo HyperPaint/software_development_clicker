@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,31 +43,6 @@ namespace MyGame
             this.money = money;
             this.premiumMoney = premiumMoney;
             this.completed = completed;
-
-            DesigningCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" проектирование завершено");
-            };
-
-            ArtCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" дизайн завершен");
-            };
-
-            ProgrammingCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" программирование завершено");
-            };
-
-            TestingCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" тестирование завершено");
-            };
-
-            OrderCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" завершен");
-            };
         }
 
 #nullable enable

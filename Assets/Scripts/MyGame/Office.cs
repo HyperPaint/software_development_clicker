@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,11 +35,6 @@ namespace MyGame
             this.kitchen = kitchen;
             this.ordersMaxCount = ordersMaxCount;
             GetNewOrders();
-
-            Upgraded += (sender) =>
-            {
-                Logger.Get().Log("Максимальное количество заказов офиса " + ToString() + " повышено до " + ordersMaxCount.ToString());
-            };
         }
 
         public void MakeWork(float modifiers)

@@ -2,15 +2,13 @@ using System.Threading;
 using UnityEngine;
 using MyGame;
 using UnityEngine.UI;
+using System;
 
 public class ModelInitializer : MonoBehaviour
 {
     private static object mutex = new();
-
-    SettingsModel settingsModel;
-    GameModel gameModel;
-
-    Timer timer;
+    private GameModel gameModel;
+    private Timer timer;
 
     public Text moneyText;
     public Text premiumMoneyText;
@@ -22,27 +20,31 @@ public class ModelInitializer : MonoBehaviour
 
     public byte clicks;
 
+    /// <summary>
+    /// В РѕРЅС‚РµРєСЃС‚ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё, РёСЃРїРѕР»СЊР·СѓРµС‚СЃВ¤ РґР»В¤ РІС‹РїРѕР»РЅРµРЅРёВ¤ РєРѕРґР° РІ РіР»Р°РІРЅРѕРј РїРѕС‚РѕРєРµ.
+    /// </summary>
+    private static readonly SynchronizationContext synchronizationContext = SynchronizationContext.Current;
+
     private void Start()
     {
-        settingsModel = SettingsModel.Get();
         gameModel = GameModel.Get();
-
         timer = new Timer(delegate
         {
             lock (mutex)
             {
                 gameModel.MakeWork();
+                synchronizationContext.Post(delegate
+                {
+                    moneyText.text = gameModel.Money.ToString();
+                    premiumMoneyText.text = gameModel.PremiumMoney.ToString();
+                }, null);
             }
-        }, null, 0, 1000);
+        }, null, 0, 500);
     }
 
     private void Update()
     {
-        // todo нужно всё это каким-то чудом вызывать после работы, передавая код из другого потока в главный, т.к. UI подчиняется только главному потоку
-        moneyText.text = gameModel.Money.ToString();
-        premiumMoneyText.text = gameModel.PremiumMoney.ToString();
-
-        // дебаг
+        // РґРµР±Р°Рі
         level = (byte)gameModel.Level;
         money = gameModel.Money;
         premiumMoney = gameModel.PremiumMoney;
@@ -52,7 +54,6 @@ public class ModelInitializer : MonoBehaviour
 
     private void OnDestroy()
     {
-        settingsModel = null;
         gameModel = null;
         timer = null;
     }

@@ -31,7 +31,7 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
         return new OrderView(prefab, content);
     }
 
-    public override void BindView(Order item, OrderView view)
+    public override void BindView(Order item, OrderView view, int position)
     {
         view.name.text = item.Name;
         view.designing.text = (Convert.ToSingle(item.Designing.current) / Convert.ToSingle(item.Designing.needed) * 100f).ToString() + "%";
@@ -42,8 +42,8 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 
     private void Start()
     {
-        // todo сделать класс для хранения игровых данных по типу такой то офис видно на экране и т.д. на него ссылаться тут при отображении пула заказов
-        List<Order> orders = GameModel.Get().Offices[0].Orders;
+        // todo РґРѕР±Р°РІРёС‚СЊ СЃРѕР±С‹С‚РёРµ РїРѕСЏРІР»РµРЅРёСЏ РЅРѕРІРѕРіРѕ Р·Р°РєР°Р·Р° РІ РѕС„РёСЃРµ.
+        // todo РґРѕР±Р°РІРёС‚СЊ СЃРѕР±С‹С‚РёРµ СѓРґР°Р»РµРЅРёСЏ Р·Р°РєР°Р·Р° РёР· РѕС„РёСЃР°.
         OrderFactory.Get().OrderCreated += (sender, created) =>
         {
             DatasetChanged();
@@ -52,6 +52,7 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
                 ViewsUpdated();
             };
         };
+        List<Order> orders = GameModel.Get().Offices[0].Orders;
         foreach (var item in orders)
         {
             item.OrderUpdated += (sender) =>

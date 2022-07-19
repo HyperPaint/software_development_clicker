@@ -7,12 +7,13 @@ namespace MyGame
     {
         private static object mutex = new();
         private static volatile GameModel model;
+        private static volatile Logger logger;
 
         /// <summary>
-        /// Функция для получения единственного объекта модели.
-        /// Можно безопасно использовать с любого потока.
+        /// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р° РјРѕРґРµР»Рё.
+        /// РњРѕР¶РЅРѕ Р±РµР·РѕРїР°СЃРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃ Р»СЋР±РѕРіРѕ РїРѕС‚РѕРєР°.
         /// </summary>
-        /// <returns>Модель</returns>
+        /// <returns>РњРѕРґРµР»СЊ</returns>
         public static GameModel Get()
         {
             if (model == null)
@@ -40,31 +41,27 @@ namespace MyGame
 
         private GameStage level;
         public GameStage Level { get => level; }
-        private List<Office> offices;
+        private List<Office> offices = new List<Office>();
         public List<Office> Offices { get => offices; }
         private ulong money;
         public ulong Money { get => money; }
         private ulong premiumMoney;
         public ulong PremiumMoney { get => premiumMoney; }
-        private ulong reputation; // todo репутация не используется
+        private ulong reputation; // todo СЂРµРїСѓС‚Р°С†РёСЏ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
         public ulong Reputation { get => reputation; }
 
         private GameModel()
         {
-            // загрузка игровых данных
+            logger = new Logger(this);
 
-            // игровых данных не найдено, начальные игровые данные
+            // Р·Р°РіСЂСѓР·РєР° РёРіСЂРѕРІС‹С… РґР°РЅРЅС‹С…
+
+            // РёРіСЂРѕРІС‹С… РґР°РЅРЅС‹С… РЅРµ РЅР°Р№РґРµРЅРѕ, РЅР°С‡Р°Р»СЊРЅС‹Рµ РёРіСЂРѕРІС‹Рµ РґР°РЅРЅС‹Рµ
             level = GameStage.GARAGE;
-            offices = new List<Office>();
             offices.Add(new Office());
-            offices[0].Units[0].WorkPlaces[0].Worker = new Worker();
+            offices[0].Units[0].WorkPlaces[0].Worker = WorkerFactory.Get().Create(Worker.EmployeeType.FULLSTACK);
             money = 0;
             premiumMoney = 100;
-
-            Upgraded += (sender) =>
-            {
-                Logger.Get().Log("Игровая стадия улучшена до " + level.ToString());
-            };
         }
 
         public void MakeWork()
@@ -114,21 +111,21 @@ namespace MyGame
         }
 
         /// <summary>
-        /// Функция для добавления валюты в банк.
+        /// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІР°Р»СЋС‚С‹ РІ Р±Р°РЅРє.
         /// </summary>
-        /// <param name="money">Добавляемое количество валюты</param>
+        /// <param name="money">Р”РѕР±Р°РІР»СЏРµРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РІР°Р»СЋС‚С‹</param>
         public void PutMoney(ulong money)
         {
             this.money += money;
         }
 
         /// <summary>
-        /// Функция для проверки и получения валюты из банка.
-        /// При достаточном балансе функция уничтожит необходимое количество валюты. 
-        /// При недостаточном балансе функция выбросит исключение.
+        /// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё Рё РїРѕР»СѓС‡РµРЅРёСЏ РІР°Р»СЋС‚С‹ РёР· Р±Р°РЅРєР°.
+        /// РџСЂРё РґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ С„СѓРЅРєС†РёСЏ СѓРЅРёС‡С‚РѕР¶РёС‚ РЅРµРѕР±С…РѕРґРёРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РІР°Р»СЋС‚С‹. 
+        /// РџСЂРё РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ С„СѓРЅРєС†РёСЏ РІС‹Р±СЂРѕСЃРёС‚ РёСЃРєР»СЋС‡РµРЅРёРµ.
         /// </summary>
-        /// <param name="money">Необходимое количество валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
+        /// <param name="money">РќРµРѕР±С…РѕРґРёРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РІР°Р»СЋС‚С‹</param>
+        /// <exception cref="NoMoneyException">Р‘СЂРѕСЃР°РµС‚СЃСЏ РїСЂРё РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ</exception>
         public void TakeMoney(ulong money)
         {
             if (this.money >= money)
@@ -140,21 +137,21 @@ namespace MyGame
         }
 
         /// <summary>
-        /// Функция для добавления премиум валюты в банк.
+        /// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РїСЂРµРјРёСѓРј РІР°Р»СЋС‚С‹ РІ Р±Р°РЅРє.
         /// </summary>
-        /// <param name="money">Добавляемое количество премиум валюты</param>
+        /// <param name="money">Р”РѕР±Р°РІР»СЏРµРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРµРјРёСѓРј РІР°Р»СЋС‚С‹</param>
         public void PutPremiumMoney(ulong money)
         {
             premiumMoney += money;
         }
 
         /// <summary>
-        /// Функция для проверки и получения премиум валюты из банка.
-        /// При достаточном балансе функция вернёт необходимое количество премиум валюты. 
-        /// При недостаточном балансе функция выбросит исключение.
+        /// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё Рё РїРѕР»СѓС‡РµРЅРёСЏ РїСЂРµРјРёСѓРј РІР°Р»СЋС‚С‹ РёР· Р±Р°РЅРєР°.
+        /// РџСЂРё РґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ С„СѓРЅРєС†РёСЏ РІРµСЂРЅС‘С‚ РЅРµРѕР±С…РѕРґРёРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРµРјРёСѓРј РІР°Р»СЋС‚С‹. 
+        /// РџСЂРё РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ С„СѓРЅРєС†РёСЏ РІС‹Р±СЂРѕСЃРёС‚ РёСЃРєР»СЋС‡РµРЅРёРµ.
         /// </summary>
-        /// <param name="money">Необходимое количество премиум валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
+        /// <param name="money">РќРµРѕР±С…РѕРґРёРјРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРµРјРёСѓРј РІР°Р»СЋС‚С‹</param>
+        /// <exception cref="NoMoneyException">Р‘СЂРѕСЃР°РµС‚СЃСЏ РїСЂРё РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕРј Р±Р°Р»Р°РЅСЃРµ</exception>
         public void TakePremiumMoney(ulong money)
         {
             if (premiumMoney >= money)
