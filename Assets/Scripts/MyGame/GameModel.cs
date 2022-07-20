@@ -89,7 +89,7 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<GameModel>? Upgraded;
 #nullable disable
 
         public void Upgrade()

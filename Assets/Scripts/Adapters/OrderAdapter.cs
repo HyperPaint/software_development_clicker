@@ -26,12 +26,12 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 
     public OrderAdapter() : base() { }
 
-    public override OrderView CreateView(RectTransform prefab, RectTransform content)
+    protected override OrderView OnCreateView(RectTransform prefab, RectTransform content)
     {
         return new OrderView(prefab, content);
     }
 
-    public override void BindView(Order item, OrderView view, int position)
+    protected override void OnBindView(Order item, OrderView view, int position)
     {
         view.name.text = item.Name;
         view.designing.text = (Convert.ToSingle(item.Designing.current) / Convert.ToSingle(item.Designing.needed) * 100f).ToString() + "%";
@@ -40,24 +40,28 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
         view.testing.text = (Convert.ToSingle(item.Testing.current) / Convert.ToSingle(item.Testing.needed) * 100f).ToString() + "%";
     }
 
+
     private void Start()
     {
-        // todo добавить событие появления нового заказа в офисе.
-        // todo добавить событие удаления заказа из офиса.
-        OrderFactory.Get().OrderCreated += (sender, created) =>
+        Office office = GameModel.Get().Offices[0];
+        List<Order> orders = office.Orders;
+        office.OrderAdded += (sender, obj) =>
         {
-            DatasetChanged();
-            (created as Order).OrderUpdated += (sender) =>
+            ViewInserted(Dataset.IndexOf(obj), false);
+            obj.OrderUpdated += (sender) =>
             {
-                ViewsUpdated();
+                ViewUpdated(Dataset.IndexOf(obj));
             };
         };
-        List<Order> orders = GameModel.Get().Offices[0].Orders;
-        foreach (var item in orders)
+        office.OrderDeleted += (sender, obj) =>
         {
-            item.OrderUpdated += (sender) =>
+            ViewDestroyed(obj);
+        };
+        foreach (Order obj in orders)
+        {
+            obj.OrderUpdated += (sender) =>
             {
-                ViewsUpdated();
+                ViewUpdated(Dataset.IndexOf(obj));
             };
         }
         Dataset = orders;

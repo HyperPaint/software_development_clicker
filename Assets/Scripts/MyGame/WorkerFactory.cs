@@ -65,7 +65,7 @@ namespace MyGame
         };
 
 #nullable enable
-        public event EventFactory? WorkerCreated;
+        public event EventObject<WorkerFactory, Worker>? WorkerCreated;
 #nullable disable
 
         public Worker Create()
@@ -95,7 +95,8 @@ namespace MyGame
             string lastName = lastNames[random.Next(0, lastNames.Length - 1)];
             string nickName = nickNames[random.Next(0, nickNames.Length - 1)];
             // todo должно зависеть от репутации
-            byte skill = 5;
+            // todo необходимо уменьшить как было
+            byte skill = 150;
             string summary = "Здесь должна быть краткая забавная история работника";
 
             Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary);

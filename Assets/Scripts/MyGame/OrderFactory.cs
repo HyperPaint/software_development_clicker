@@ -43,7 +43,7 @@ namespace MyGame
         };
 
 #nullable enable
-        public event EventFactory? OrderCreated;
+        public event EventObject<OrderFactory, Order>? OrderCreated;
 #nullable disable
 
         private static readonly float MONEY_PER_NEEDED = 1f;

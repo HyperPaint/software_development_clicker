@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace MyGame
 {
-    public delegate void Event(object sender);
-    public delegate void EventFactory(object sender, object created);
+    public delegate void Event<SENDER>(SENDER sender);
+    public delegate void EventObject<SENDER, OBJ>(SENDER sender, OBJ obj);
 }

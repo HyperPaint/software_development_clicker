@@ -37,6 +37,11 @@ namespace MyGame
             GetNewOrders();
         }
 
+#nullable enable
+        public event EventObject<Office, Order>? OrderAdded;
+        public event EventObject<Office, int>? OrderDeleted;
+#nullable disable
+
         public void MakeWork(float modifiers)
         {
             Works works = new Works();
@@ -51,9 +56,15 @@ namespace MyGame
             for (int i = 0; i < orders.Count;)
             {
                 if (orders[i].Completed)
+                {
                     orders.RemoveAt(i);
+                    OrderDeleted?.Invoke(this, i);
+                }
                 else
+                {
                     i++;
+                }
+                    
             }
             GetNewOrders();
         }
@@ -63,7 +74,9 @@ namespace MyGame
             OrderFactory factory = OrderFactory.Get();
             while (orders.Count < ordersMaxCount)
             {
-                orders.Add(factory.Create());
+                Order buff = factory.Create();
+                orders.Add(buff);
+                OrderAdded?.Invoke(this, buff);
             }
         }
 
@@ -104,7 +117,7 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<Office>? Upgraded;
 #nullable disable
 
         public void UpgradeOrdersMaxCount()

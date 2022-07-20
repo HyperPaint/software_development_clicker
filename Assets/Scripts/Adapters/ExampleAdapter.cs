@@ -70,7 +70,7 @@ public class ExampleAdapter : BaseAdapter<Example, ExampleAdapter.ExampleView>
     /// <param name="prefab">Префаб создаваемого объекта, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
     /// <param name="content">Контейнер для создаваемых объектов, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
     /// <returns>Экземпляр класса <see cref="ExampleView"/>.</returns>
-    public override ExampleView CreateView(RectTransform prefab, RectTransform content)
+    protected override ExampleView OnCreateView(RectTransform prefab, RectTransform content)
     {
         return new ExampleView(prefab, content);
     }
@@ -81,7 +81,7 @@ public class ExampleAdapter : BaseAdapter<Example, ExampleAdapter.ExampleView>
     /// <param name="item">Экземпляр класса <see cref="Example"/> из заранее выданного набора данных.</param>
     /// <param name="view">Заранее созданный экземпляр класса <see cref="ExampleView"/> с привязанными компонентами интерфейса.</param>
     /// <param name="position">Позиция компонента в наборе данных.</param>
-    public override void BindView(Example item, ExampleView view, int position)
+    protected override void OnBindView(Example item, ExampleView view, int position)
     {
         // наполнение интерфейса данными
         view.exampleText.text = item.example.ToString();

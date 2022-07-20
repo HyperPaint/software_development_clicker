@@ -27,7 +27,7 @@ namespace MyGame
         public abstract ulong GetUpgradePremiumCost();
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<UpgradeablePart>? Upgraded;
 #nullable disable
 
         public void Upgrade()

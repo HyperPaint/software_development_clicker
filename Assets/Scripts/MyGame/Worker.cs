@@ -192,7 +192,7 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<Worker>? Upgraded;
 #nullable disable
 
         public void Upgrade()

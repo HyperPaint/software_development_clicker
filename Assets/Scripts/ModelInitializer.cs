@@ -1,14 +1,13 @@
-using System.Threading;
+using System.Timers;
 using UnityEngine;
 using MyGame;
 using UnityEngine.UI;
-using System;
 
 public class ModelInitializer : MonoBehaviour
 {
     private static object mutex = new();
     private GameModel gameModel;
-    private Timer timer;
+    private Timer timer = new Timer();
 
     public Text moneyText;
     public Text premiumMoneyText;
@@ -23,12 +22,12 @@ public class ModelInitializer : MonoBehaviour
     /// <summary>
     ///  онтекст синхронизации, используетс¤ дл¤ выполнени¤ кода в главном потоке.
     /// </summary>
-    private static readonly SynchronizationContext synchronizationContext = SynchronizationContext.Current;
+    private static readonly System.Threading.SynchronizationContext synchronizationContext = System.Threading.SynchronizationContext.Current;
 
     private void Start()
     {
         gameModel = GameModel.Get();
-        timer = new Timer(delegate
+        timer.Elapsed += delegate
         {
             lock (mutex)
             {
@@ -37,24 +36,22 @@ public class ModelInitializer : MonoBehaviour
                 {
                     moneyText.text = gameModel.Money.ToString();
                     premiumMoneyText.text = gameModel.PremiumMoney.ToString();
+
+                    level = (byte)gameModel.Level;
+                    money = gameModel.Money;
+                    premiumMoney = gameModel.PremiumMoney;
+                    reputation = gameModel.Reputation;
+                    clicks = gameModel.Offices[0].Units[0].WorkPlaces[0].Clicks;
                 }, null);
             }
-        }, null, 0, 500);
+        };
+        timer.Interval = 500;
+        timer.Start();
     }
 
-    private void Update()
+    private void OnApplicationQuit()
     {
-        // дебаг
-        level = (byte)gameModel.Level;
-        money = gameModel.Money;
-        premiumMoney = gameModel.PremiumMoney;
-        reputation = gameModel.Reputation;
-        clicks = gameModel.Offices[0].Units[0].WorkPlaces[0].Clicks;
-    }
-
-    private void OnDestroy()
-    {
-        gameModel = null;
-        timer = null;
+        // todo сохранение
+        timer.Stop();
     }
 }
