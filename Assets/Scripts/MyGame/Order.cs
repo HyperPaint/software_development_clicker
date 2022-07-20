@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,39 +43,15 @@ namespace MyGame
             this.money = money;
             this.premiumMoney = premiumMoney;
             this.completed = completed;
-
-            DesigningCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" проектирование завершено");
-            };
-
-            ArtCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" дизайн завершен");
-            };
-
-            ProgrammingCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" программирование завершено");
-            };
-
-            TestingCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" тестирование завершено");
-            };
-
-            OrderCompleted += (sender) =>
-            {
-                Logger.Get().Log("Заказ \"" + name + "\" завершен");
-            };
         }
 
 #nullable enable
-        public event Event? DesigningCompleted;
-        public event Event? ArtCompleted;
-        public event Event? ProgrammingCompleted;
-        public event Event? TestingCompleted;
-        public event Event? OrderCompleted;
+        public event Event<Order>? OrderUpdated;
+        public event Event<Order>? DesigningCompleted;
+        public event Event<Order>? ArtCompleted;
+        public event Event<Order>? ProgrammingCompleted;
+        public event Event<Order>? TestingCompleted;
+        public event Event<Order>? OrderCompleted;
 #nullable disable
 
         public void TransferWork(ref Works works)
@@ -84,6 +60,9 @@ namespace MyGame
             {
                 TransferWork(ref works.designing, ref designing, ref DesigningCompleted);
                 TransferWork(ref works.fullstack, ref designing, ref DesigningCompleted);
+                OrderUpdated?.Invoke(this);
+                if (designing.completed)
+                    TransferWork(ref works);
             }
             else if (!art.completed || !programming.completed)
             {
@@ -91,18 +70,24 @@ namespace MyGame
                 {
                     TransferWork(ref works.art, ref art, ref ArtCompleted);
                     TransferWork(ref works.fullstack, ref art, ref ArtCompleted);
+                    OrderUpdated?.Invoke(this);
                 }
                 if (!programming.completed)
                 {
                     TransferWork(ref works.programming, ref programming, ref ProgrammingCompleted);
                     TransferWork(ref works.fullstack, ref programming, ref ProgrammingCompleted);
+                    OrderUpdated?.Invoke(this);
                 }
+                if (art.completed && programming.completed)
+                    TransferWork(ref works);
             }
             else if (!testing.completed)
             {
                 TransferWork(ref works.testing, ref testing, ref TestingCompleted);
                 TransferWork(ref works.fullstack, ref testing, ref TestingCompleted);
+                OrderUpdated?.Invoke(this);
             }
+            // перенос на следующий тик
             else
             {
                 completed = true;
@@ -112,7 +97,7 @@ namespace MyGame
             }
         }
 
-        private void TransferWork(ref ulong work, ref OrderPart orderPart, ref Event @event) {
+        private void TransferWork(ref ulong work, ref OrderPart orderPart, ref Event<Order> @event) {
             // перевожу работу в часть заказа
             orderPart.current += work;
             // если часть заказа выполнена

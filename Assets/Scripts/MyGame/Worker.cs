@@ -66,11 +66,6 @@ namespace MyGame
             this.nickName = nickName;
             this.skill = skill;
             this.summary = summary;
-
-            Upgraded += (sender) =>
-            {
-                Logger.Get().Log("Навык работника " + ToString() + " улучшен до " + skill.ToString());
-            };
         }
 
         private static readonly float WORK_PER_SKILL = 0.25f;
@@ -119,11 +114,11 @@ namespace MyGame
             }
             return Feature switch
             {
-                EmployeeFeature.NONE => (ulong)(workValue),
-                EmployeeFeature.STUDENT => (ulong)(workValue * STUDENT_WORK_MODIFIER),
-                EmployeeFeature.SPECIALIST => (ulong)(workValue * SPECIALIST_WORK_MODIFIER),
-                EmployeeFeature.LAZY => (ulong)(GameModel.Random.Next(1, 100) <= LAZY_WORK_CHANCE ? workValue * LAZY_WORK_MODIFIER : Skill * WORK_PER_SKILL),
-                EmployeeFeature.CREATIVE => (ulong)(GameModel.Random.Next(1, 100) <= CREATIVE_WORK_CHANCE ? workValue / CREATIVE_WORK_MODIFIER : Skill * WORK_PER_SKILL),
+                EmployeeFeature.NONE => (ulong)Math.Ceiling(workValue),
+                EmployeeFeature.STUDENT => (ulong)Math.Ceiling(workValue * STUDENT_WORK_MODIFIER),
+                EmployeeFeature.SPECIALIST => (ulong)Math.Ceiling(workValue * SPECIALIST_WORK_MODIFIER),
+                EmployeeFeature.LAZY => (byte)GameModel.Random.Next(1, 100) <= LAZY_WORK_CHANCE ? (ulong)Math.Ceiling(workValue * LAZY_WORK_MODIFIER) : (ulong)Math.Ceiling(workValue),
+                EmployeeFeature.CREATIVE => (byte)GameModel.Random.Next(1, 100) <= CREATIVE_WORK_CHANCE ? (ulong)Math.Ceiling(workValue / CREATIVE_WORK_MODIFIER) : (ulong)Math.Ceiling(workValue),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -197,7 +192,7 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<Worker>? Upgraded;
 #nullable disable
 
         public void Upgrade()
@@ -220,7 +215,7 @@ namespace MyGame
 
         public override string ToString()
         {
-            if (String.IsNullOrEmpty(nickName))
+            if (string.IsNullOrEmpty(nickName))
             {
                 return firstName + " " + lastName;
             }

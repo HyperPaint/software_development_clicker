@@ -1,4 +1,4 @@
-﻿namespace MyGame
+namespace MyGame
 {
     public struct OfficeKitchen
     {

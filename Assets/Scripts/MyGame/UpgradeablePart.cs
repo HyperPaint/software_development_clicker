@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +18,6 @@ namespace MyGame
         public UpgradeablePart(byte level)
         {
             this.level = level;
-
-            Upgraded += (sender) =>
-            {
-                Logger.Get().Log("Часть улучшена до " + level.ToString());
-            };
         }
 
         public abstract float GetModifier();
@@ -32,7 +27,7 @@ namespace MyGame
         public abstract ulong GetUpgradePremiumCost();
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<UpgradeablePart>? Upgraded;
 #nullable disable
 
         public void Upgrade()

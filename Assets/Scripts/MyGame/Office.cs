@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,7 @@ namespace MyGame
         public Unit[] Units { get => units; }
         private List<Order> orders;
         public List<Order> Orders { get => orders; }
-        // todo невозможно купить еду в кухню
+        // todo сейчас невозможно купить еду в кухню
         private OfficeKitchen kitchen;
         public OfficeKitchen Kitchen { get => kitchen; }
         private byte ordersMaxCount;
@@ -35,12 +35,12 @@ namespace MyGame
             this.kitchen = kitchen;
             this.ordersMaxCount = ordersMaxCount;
             GetNewOrders();
-
-            Upgraded += (sender) =>
-            {
-                Logger.Get().Log("Максимальное количество заказов офиса " + ToString() + " повышено до " + ordersMaxCount.ToString());
-            };
         }
+
+#nullable enable
+        public event EventObject<Office, Order>? OrderAdded;
+        public event EventObject<Office, int>? OrderDeleted;
+#nullable disable
 
         public void MakeWork(float modifiers)
         {
@@ -56,9 +56,15 @@ namespace MyGame
             for (int i = 0; i < orders.Count;)
             {
                 if (orders[i].Completed)
+                {
                     orders.RemoveAt(i);
+                    OrderDeleted?.Invoke(this, i);
+                }
                 else
+                {
                     i++;
+                }
+                    
             }
             GetNewOrders();
         }
@@ -68,8 +74,30 @@ namespace MyGame
             OrderFactory factory = OrderFactory.Get();
             while (orders.Count < ordersMaxCount)
             {
-                orders.Add(factory.Create());
+                Order buff = factory.Create();
+                orders.Add(buff);
+                OrderAdded?.Invoke(this, buff);
             }
+        }
+
+        public void GetBuyFoodForKitchenCost()
+        {
+
+        }
+
+        public void GetBuyFoodForKitchenPremiumCost()
+        {
+
+        }
+
+        public void BuyFoodForKitchen()
+        {
+
+        }
+
+        public void BuyFoodForKitchenPremium()
+        {
+
         }
 
         private static readonly float UPGRADE_COST = 5;
@@ -89,7 +117,7 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event? Upgraded;
+        public event Event<Office>? Upgraded;
 #nullable disable
 
         public void UpgradeOrdersMaxCount()

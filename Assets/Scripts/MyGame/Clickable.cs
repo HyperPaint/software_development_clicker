@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,10 +36,10 @@ namespace MyGame
         }
 
         public static readonly byte CLICKABLE_CLICKS_TIRED_NONE = 0;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_EASY = 5;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_NORMAL = 10;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_MEDIUM = 15;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_HARD = 20;
+        public static readonly byte CLICKABLE_CLICKS_TIRED_EASY = 1;
+        public static readonly byte CLICKABLE_CLICKS_TIRED_NORMAL = 3;
+        public static readonly byte CLICKABLE_CLICKS_TIRED_MEDIUM = 5;
+        public static readonly byte CLICKABLE_CLICKS_TIRED_HARD = 7;
 
         public Tired GetTired()
         {
