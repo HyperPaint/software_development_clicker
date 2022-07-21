@@ -1,9 +1,9 @@
-using System.Timers;
+using MyGame;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Threading.Tasks;
-using System;
 
 /// <summary>
 /// Базовый типизированный класс адаптера.
@@ -127,7 +127,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             // костыль
             if (dataset.Count != views.Count)
             {
-                await Task.Delay(animationTime);
+                await Task.Delay(Config.BASE_ADAPTER_ANIMATION_TIME);
             }
             OnBindView(dataset[position], views[position], position);
         }, null);
@@ -150,12 +150,6 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         }, null);
     }
 
-    private const byte animationTicks = 30;
-    private const int animationWaitTime = 500;
-    private const int animationTime = 1000;
-    private const float animationTickValue = 1f / animationTicks;
-    private const int animationTickTime = animationTime / animationTicks;
-
     /// <summary>
     /// Сообщает адаптеру, что на указанную позицию (начало или конец списка) добавлен компонент в набор данных.
     /// </summary>
@@ -177,15 +171,15 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             scale.y = 0f;
             view.gameObject.transform.localScale = scale;
         }, null);
-        await Task.Delay(animationWaitTime);
+        await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
         synchronizationContext.Post(delegate
         {
             OnBindView(dataset[position], view, position);
             // анимация
-            byte currentTicks = animationTicks;
+            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
             Timer timer = null;
             timer = new Timer();
-            timer.Interval = animationTickTime;
+            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
             timer.Elapsed += delegate
             {
                 synchronizationContext.Post(delegate
@@ -193,8 +187,8 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
                     if (currentTicks > 0)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
-                        scale.x += animationTickValue;
-                        scale.y += animationTickValue;
+                        scale.x += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
+                        scale.y += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     }
@@ -220,13 +214,13 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         VIEW view = views[position];
         views.RemoveAt(position);
         // анимация
-        await Task.Delay(animationWaitTime);
+        await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
         synchronizationContext.Post(delegate
         {
-            byte currentTicks = animationTicks;
+            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
             Timer timer = null;
             timer = new Timer();
-            timer.Interval = animationTickTime;
+            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
             timer.Elapsed += delegate
             {
                 synchronizationContext.Post(delegate
@@ -234,8 +228,8 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
                     if (currentTicks > 0)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
-                        scale.x -= animationTickValue;
-                        scale.y -= animationTickValue;
+                        scale.x -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
+                        scale.y -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     }

@@ -1,8 +1,8 @@
+using MyGame;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using MyGame;
 
 public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 {
@@ -44,25 +44,28 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     {
         Office office = GameModel.Get().Offices[0];
         List<Order> orders = office.Orders;
-        office.OrderAdded += (sender, obj) =>
-        {
-            ViewInserted(Dataset.IndexOf(obj), false);
-            obj.OrderUpdated += (sender) =>
-            {
-                ViewUpdated(Dataset.IndexOf(obj));
-            };
-        };
-        office.OrderDeleted += (sender, obj) =>
-        {
-            ViewDestroyed(obj);
-        };
+        office.OrderAdded += OrderAdded;
+        office.OrderDeleted += OrderDeleted;
         foreach (Order obj in orders)
         {
-            obj.OrderUpdated += (sender) =>
-            {
-                ViewUpdated(Dataset.IndexOf(obj));
-            };
+            obj.OrderUpdated += OrderUpdated;
         }
         Dataset = orders;
+    }
+
+    private void OrderAdded(Office sender, Order obj1, int obj2)
+    {
+        ViewInserted(obj2);
+        obj1.OrderUpdated += OrderUpdated;
+    }
+
+    private void OrderUpdated(Order sender)
+    {
+        ViewUpdated(Dataset.IndexOf(sender));
+    }
+
+    private void OrderDeleted(Office sender, Order obj1, int obj2)
+    {
+        ViewDestroyed(obj2);
     }
 }

@@ -1,143 +1,105 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyGame
 {
-    public class Office
+    public class Office : Upgradeable
     {
         private Unit[] units;
         public Unit[] Units { get => units; }
         private List<Order> orders;
         public List<Order> Orders { get => orders; }
-        // todo сейчас невозможно купить еду в кухню
-        private OfficeKitchen kitchen;
-        public OfficeKitchen Kitchen { get => kitchen; }
-        private byte ordersMaxCount;
-        public byte OrdersMaxCount { get => ordersMaxCount; }
+        private Kitchen kitchen;
+        public Kitchen Kitchen { get => kitchen; }
+        private OfficePart[] parts;
+        public OfficePart[] Parts { get => parts; }
+        public OfficePart PartInternet { get => parts[(byte)OfficePart.OfficePartType.INTERNET]; }
+        public OfficePart PartClimate { get => parts[(byte)OfficePart.OfficePartType.CLIMATE]; }
+        public OfficePart PartMusic { get => parts[(byte)OfficePart.OfficePartType.MUSIC]; }
 
-        private static readonly byte ORDERS_MAX_COUNT_START = 2;
-
-        public Office() : this(new Unit[1], new List<Order>(), new OfficeKitchen(), ORDERS_MAX_COUNT_START)
+        public Office() : this(new Unit[Config.OFFICE_UNITS_START_COUNT], new List<Order>(), new Kitchen(), new OfficePart[OfficePart.officePartTypeLength], Config.OFFICE_ORDERS_START_COUNT)
         {
             for (int i = 0; i < units.Length; i++)
             {
                 units[i] = new Unit();
             }
+            for (byte i = 0; i < OfficePart.officePartTypeLength; i++)
+            {
+                parts[i] = new OfficePart(i);
+            }
+            AddNewOrders();
         }
 
-        public Office(Unit[] units, List<Order> orders, OfficeKitchen kitchen, byte ordersMaxCount)
+        public Office(Unit[] units, List<Order> orders, Kitchen kitchen, OfficePart[] parts, byte level) : base(level)
         {
             this.units = units;
             this.orders = orders;
             this.kitchen = kitchen;
-            this.ordersMaxCount = ordersMaxCount;
-            GetNewOrders();
+            this.parts = parts;
         }
 
-#nullable enable
-        public event EventObject<Office, Order>? OrderAdded;
-        public event EventObject<Office, int>? OrderDeleted;
-#nullable disable
+        public override ulong GetUpgradeCost()
+        {
+            return Convert.ToUInt64(Math.Pow(level, Config.OFFICE_UPGRADE_EXP) * Config.OFFICE_UPGRADE_COST);
+        }
 
-        public void MakeWork(float modifiers)
+        public void MakeWork()
         {
             Works works = new Works();
             foreach (Unit unit in units)
             {
-                works += unit.MakeWork(ref kitchen, modifiers);
+                works += unit.MakeWork(kitchen, GetModifiers());
             }
             foreach (Order order in orders)
             {
                 order.TransferWork(ref works);
             }
+            DeleteCompletedOrders();
+            AddNewOrders();
+        }
+
+#nullable enable
+        public event EventWith2Object<Office, Order, int>? OrderAdded;
+        public event EventWith2Object<Office, Order, int>? OrderDeleted;
+#nullable disable
+
+        private void DeleteCompletedOrders()
+        {
             for (int i = 0; i < orders.Count;)
             {
                 if (orders[i].Completed)
                 {
+                    Order buff = orders[i];
                     orders.RemoveAt(i);
-                    OrderDeleted?.Invoke(this, i);
+                    OrderDeleted?.Invoke(this, buff, i);
                 }
                 else
                 {
                     i++;
                 }
-                    
             }
-            GetNewOrders();
         }
 
-        private void GetNewOrders()
+        private void AddNewOrders()
         {
             OrderFactory factory = OrderFactory.Get();
-            while (orders.Count < ordersMaxCount)
+            while (orders.Count < level)
             {
                 Order buff = factory.Create();
+                int i = orders.Count;
                 orders.Add(buff);
-                OrderAdded?.Invoke(this, buff);
+                OrderAdded?.Invoke(this, buff, i);
             }
         }
 
-        public void GetBuyFoodForKitchenCost()
+        public float GetModifiers()
         {
-
-        }
-
-        public void GetBuyFoodForKitchenPremiumCost()
-        {
-
-        }
-
-        public void BuyFoodForKitchen()
-        {
-
-        }
-
-        public void BuyFoodForKitchenPremium()
-        {
-
-        }
-
-        private static readonly float UPGRADE_COST = 5;
-        private static readonly float UPGRADE_EXP = 3;
-
-        public ulong GetUpgradeOrdersMaxCountCost()
-        {
-            return (ulong)(Math.Pow(ordersMaxCount, UPGRADE_EXP) * UPGRADE_COST);
-        }
-
-        private static readonly float UPGRADE_COST_PREMIUM = 5;
-        private static readonly float UPGRADE_EXP_PREMIUM = 3;
-
-        public ulong GetUpgradeOrdersMaxCountPremiumCost()
-        {
-            return (ulong)(Math.Pow(ordersMaxCount, UPGRADE_EXP_PREMIUM) * UPGRADE_COST_PREMIUM);
-        }
-
-#nullable enable
-        public event Event<Office>? Upgraded;
-#nullable disable
-
-        public void UpgradeOrdersMaxCount()
-        {
-            if (ordersMaxCount == byte.MaxValue)
-                throw new MaxLevelException();
-            GameModel.Get().TakeMoney(GetUpgradeOrdersMaxCountCost());
-            ordersMaxCount++;
-            Upgraded?.Invoke(this);
-            GetNewOrders();
-        }
-
-        public void UpgradeOrdersMaxCountPremium()
-        {
-            if (ordersMaxCount == byte.MaxValue)
-                throw new MaxLevelException();
-            GameModel.Get().TakePremiumMoney(GetUpgradeOrdersMaxCountPremiumCost());
-            ordersMaxCount++;
-            Upgraded?.Invoke(this);
-            GetNewOrders();
+            float value = Config.Base.MODIFIER_BASE;
+            for (byte i = 0; i < OfficePart.officePartTypeLength; i++)
+            {
+                value *= parts[i].GetModifier();
+            }
+            return value;
         }
     }
 }

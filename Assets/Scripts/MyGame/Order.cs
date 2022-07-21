@@ -1,27 +1,35 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace MyGame
 {
     public class Order
     {
+        public struct Part
+        {
+            public ulong current;
+            public ulong needed;
+            public bool completed;
+
+            public Part(ulong current, ulong needed, bool completed)
+            {
+                this.current = current;
+                this.needed = needed;
+                this.completed = completed;
+            }
+        }
+
         private string name;
         public string Name { get => name; }
         private string description;
         public string Description { get => description; }
         private uint icon;
         public uint Icon { get => icon; }
-        private OrderPart designing;
-        public OrderPart Designing { get => designing; }
-        private OrderPart art;
-        public OrderPart Art { get => art; }
-        private OrderPart programming;
-        public OrderPart Programming { get => programming; }
-        private OrderPart testing;
-        public OrderPart Testing { get => testing; }
+        private Part designing;
+        public Part Designing { get => designing; }
+        private Part art;
+        public Part Art { get => art; }
+        private Part programming;
+        public Part Programming { get => programming; }
+        private Part testing;
+        public Part Testing { get => testing; }
         private ulong money;
         public ulong Money { get => money; }
         private ulong premiumMoney;
@@ -29,9 +37,9 @@ namespace MyGame
         private bool completed;
         public bool Completed { get => completed; }
 
-        public Order() : this ("", "", 0, new OrderPart(), new OrderPart(), new OrderPart(), new OrderPart(), 1, 0, false) { }
+        public Order() : this ("", "", 0, new Part(), new Part(), new Part(), new Part(), 1, 0, false) { }
 
-        public Order(string name, string description, uint icon, OrderPart designing, OrderPart art, OrderPart programming, OrderPart testing, ulong money, ulong premiumMoney, bool completed)
+        public Order(string name, string description, uint icon, Part designing, Part art, Part programming, Part testing, ulong money, ulong premiumMoney, bool completed)
         {
             this.name = name;
             this.description = description;
@@ -46,11 +54,11 @@ namespace MyGame
         }
 
 #nullable enable
-        public event Event<Order>? OrderUpdated;
         public event Event<Order>? DesigningCompleted;
         public event Event<Order>? ArtCompleted;
         public event Event<Order>? ProgrammingCompleted;
         public event Event<Order>? TestingCompleted;
+        public event Event<Order>? OrderUpdated;
         public event Event<Order>? OrderCompleted;
 #nullable disable
 
@@ -87,20 +95,20 @@ namespace MyGame
                 TransferWork(ref works.fullstack, ref testing, ref TestingCompleted);
                 OrderUpdated?.Invoke(this);
             }
-            // перенос на следующий тик
+            // сдача заказа требует одного тика
             else
             {
                 completed = true;
                 GameModel.Get().PutMoney(money);
-                GameModel.Get().PutPremiumMoney(premiumMoney);
+                GameModel.Get().PutPremium(premiumMoney);
                 OrderCompleted?.Invoke(this);
             }
         }
 
-        private void TransferWork(ref ulong work, ref OrderPart orderPart, ref Event<Order> @event) {
-            // перевожу работу в часть заказа
+        private void TransferWork(ref ulong work, ref Part orderPart, ref Event<Order> @event) {
+            // перевожу работу в часть
             orderPart.current += work;
-            // если часть заказа выполнена
+            // если часть выполнена
             if (orderPart.current >= orderPart.needed)
             {
                 // возращаю остаток работы
@@ -109,10 +117,10 @@ namespace MyGame
                 orderPart.completed = true;
                 @event?.Invoke(this);
             }
-            // не выполнена
+            // часть не выполнена
             else
             {
-                // забираю всю работу
+                // забираю работу
                 work = 0;
             }
         }

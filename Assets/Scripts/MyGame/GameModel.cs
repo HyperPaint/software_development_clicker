@@ -59,55 +59,40 @@ namespace MyGame
             // игровых данных не найдено, начальные игровые данные
             level = GameStage.GARAGE;
             offices.Add(new Office());
-            offices[0].Units[0].WorkPlaces[0].Worker = WorkerFactory.Get().Create(Worker.EmployeeType.FULLSTACK);
+            offices[0].Units[0].Workplaces[0].Worker = WorkerFactory.Get().Create(Worker.EmployeeType.FULLSTACK); ;
             money = 0;
             premiumMoney = 100;
-        }
-
-        public void MakeWork()
-        {
-            foreach (Office office in offices)
-            {
-                office.MakeWork(1f);
-            }
-        }
-
-        private static readonly float UPGRADE_COST = 5;
-        private static readonly float UPGRADE_EXP = 3;
-
-        public ulong GetUpgradeCost()
-        {
-            return (ulong)(Math.Pow((double)level, UPGRADE_EXP) * UPGRADE_COST);
-        }
-
-        private static readonly float UPGRADE_COST_PREMIUM = 5;
-        private static readonly float UPGRADE_EXP_PREMIUM = 3;
-
-        public ulong GetUpgradePremiumCost()
-        {
-            return (ulong)(Math.Pow((double)level, UPGRADE_EXP_PREMIUM) * UPGRADE_COST_PREMIUM);
         }
 
 #nullable enable
         public event Event<GameModel>? Upgraded;
 #nullable disable
 
-        public void Upgrade()
+        public void BuyUpgrade()
         {
-            if (level == GameStage.GARAGE)
-                throw new MaxLevelException();
             TakeMoney(GetUpgradeCost());
-            level++;
+            if (level < GameStage.BUILDING)
+            {
+                level++;
+            }
+            else
+            {
+                throw new MaxLevelException();
+            }
             Upgraded?.Invoke(this);
         }
 
-        public void UpgradePremium()
+        public ulong GetUpgradeCost()
         {
-            if (level == GameStage.GARAGE)
-                throw new MaxLevelException();
-            TakePremiumMoney(GetUpgradePremiumCost());
-            level++;
-            Upgraded?.Invoke(this);
+            return Convert.ToUInt64(Math.Pow((double)level, Config.GAME_MODEL_UPGRADE_EXP) * Config.GAME_MODEL_UPGRADE_COST);
+        }
+
+        public void MakeWork()
+        {
+            foreach (Office office in offices)
+            {
+                office.MakeWork();
+            }
         }
 
         /// <summary>
@@ -119,13 +104,17 @@ namespace MyGame
             this.money += money;
         }
 
+#nullable enable
+        public event EventWith1Object<GameModel, ulong>? NotEnoughMoney;
+#nullable disable
+
         /// <summary>
         /// Функция для проверки и получения валюты из банка.
         /// При достаточном балансе функция уничтожит необходимое количество валюты. 
         /// При недостаточном балансе функция выбросит исключение.
         /// </summary>
         /// <param name="money">Необходимое количество валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
+        /// <exception cref="NotEnoughCurrencyException">Бросается при недостаточном балансе</exception>
         public void TakeMoney(ulong money)
         {
             if (this.money >= money)
@@ -133,17 +122,21 @@ namespace MyGame
                 this.money -= money;
                 return;
             }
-            throw new NoMoneyException();
+            NotEnoughMoney?.Invoke(this, money - this.money);
         }
 
         /// <summary>
         /// Функция для добавления премиум валюты в банк.
         /// </summary>
         /// <param name="money">Добавляемое количество премиум валюты</param>
-        public void PutPremiumMoney(ulong money)
+        public void PutPremium(ulong money)
         {
             premiumMoney += money;
         }
+
+#nullable enable
+        public event EventWith1Object<GameModel, ulong>? NotEnoughPremium;
+#nullable disable
 
         /// <summary>
         /// Функция для проверки и получения премиум валюты из банка.
@@ -151,15 +144,15 @@ namespace MyGame
         /// При недостаточном балансе функция выбросит исключение.
         /// </summary>
         /// <param name="money">Необходимое количество премиум валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
-        public void TakePremiumMoney(ulong money)
+        /// <exception cref="NotEnoughCurrencyException">Бросается при недостаточном балансе</exception>
+        public void TakePremium(ulong money)
         {
             if (premiumMoney >= money)
             {
                 premiumMoney -= money;
                 return;
             }
-            throw new NoMoneyException();
+            NotEnoughPremium?.Invoke(this, money - this.money);
         }
 
         public void IncreaseReputation()

@@ -1,4 +1,3 @@
-using System.Threading;
 using UnityEngine;
 
 namespace MyGame
@@ -7,42 +6,36 @@ namespace MyGame
     {
         private static object mutex = new();
 
-        /// <summary>
-        /// Контекст синхронизации, используется для выполнения кода в главном потоке.
-        /// </summary>
-        private static readonly SynchronizationContext synchronizationContext = SynchronizationContext.Current;
-
         public Logger(GameModel gameModel)
         {
             gameModel.Upgraded += (sender) =>
             {
-                Log("Игровая модель улучшена до " + (sender as GameModel).Level.ToString());
+                Log("Игровая модель улучшена до " + sender.Level.ToString());
             };
 
             foreach (var office in gameModel.Offices)
             {
                 office.Upgraded += (sender) =>
                 {
-                    Log("Максимальное количество заказов офиса " + office.ToString() + " повышено до " + office.OrdersMaxCount.ToString());
+                    Log("Максимальное количество заказов офиса " + sender.ToString() + " повышено до " + sender.Level.ToString());
                 };
 
+                foreach (var part in office.Parts)
+                {
+                    part.Upgraded += (sender) =>
+                    {
+                        Log("В офисе " + office.ToString() + " часть " + sender.ToString() + " улучшена до " + sender.Level.ToString());
+                    };
+                }
                 foreach (var unit in office.Units)
                 {
-                    foreach (var part in unit.Parts)
-                    {
-                        part.Upgraded += (sender) =>
-                        {
-                            Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + " часть " + part.ToString() + " улучшена до " + part.Level.ToString());
-                        };
-                    }
-
-                    foreach (var workPlace in unit.WorkPlaces)
+                    foreach (var workPlace in unit.Workplaces)
                     {
                         foreach (var part in workPlace.Parts)
                         {
                             part.Upgraded += (sender) =>
                             {
-                                Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + ", в рабочем месте " + workPlace.ToString() + " часть " + part.ToString() + " улучшена до " + part.Level.ToString());
+                                Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + ", в рабочем месте " + workPlace.ToString() + " часть " + sender.ToString() + " улучшена до " + sender.Level.ToString());
                             };
                         }
                     }
@@ -51,62 +44,54 @@ namespace MyGame
 
             OrderFactory.Get().OrderCreated += (factory, obj) =>
             {
-                Order order = (Order)obj;
-                Log("Заказ \"" + order.ToString() + "\" создан");
-                order.DesigningCompleted += (sender) =>
+                Log("Заказ \"" + obj.ToString() + "\" создан");
+                obj.DesigningCompleted += (sender) =>
                 {
-                    Log("Заказ \"" + order.Name + "\" проектирование завершено");
+                    Log("Заказ \"" + sender.Name + "\" проектирование завершено");
                 };
-                order.ArtCompleted += (sender) =>
+                obj.ArtCompleted += (sender) =>
                 {
-                    Log("Заказ \"" + order.Name + "\" дизайн завершен");
+                    Log("Заказ \"" + sender.Name + "\" дизайн завершен");
                 };
-                order.ProgrammingCompleted += (sender) =>
+                obj.ProgrammingCompleted += (sender) =>
                 {
-                    Log("Заказ \"" + order.Name + "\" программирование завершено");
+                    Log("Заказ \"" + sender.Name + "\" программирование завершено");
                 };
-                order.TestingCompleted += (sender) =>
+                obj.TestingCompleted += (sender) =>
                 {
-                    Log("Заказ \"" + order.Name + "\" тестирование завершено");
+                    Log("Заказ \"" + sender.Name + "\" тестирование завершено");
                 };
-                order.OrderCompleted += (sender) =>
+                obj.OrderCompleted += (sender) =>
                 {
-                    Log("Заказ \"" + order.Name + "\" завершен");
+                    Log("Заказ \"" + sender.Name + "\" завершен");
                 };
             };
 
             WorkerFactory.Get().WorkerCreated += (factory, obj) =>
             {
-                Worker worker = (Worker)obj;
-                Log("Работник \"" + worker.ToString() + "\" создан");
-                worker.Upgraded += (sender) =>
+                Log("Работник \"" + obj.ToString() + "\" создан");
+                obj.Upgraded += (sender) =>
                 {
-                    Log("Навык работника " + worker.ToString() + " улучшен до " + worker.Skill.ToString());
+                    Log("Навык работника " + sender.ToString() + " улучшен до " + sender.Skill.ToString());
                 };
             };
         }
 
         public void Log()
         {
-            synchronizationContext.Post(delegate
+            const string defaultError = "Произошло неожиданное событие.";
+            lock (mutex)
             {
-                const string defaultError = "Произошло неожиданное событие.";
-                lock (mutex)
-                {
-                    Debug.Log(defaultError);
-                }
-            }, null);
+                Debug.Log(defaultError);
+            }
         }
 
         public void Log(string message)
         {
-            synchronizationContext.Post(delegate
+            lock (mutex)
             {
-                lock (mutex)
-                {
-                    Debug.Log(message);
-                }
-            }, null);
+                Debug.Log(message);
+            }
         }
     }
 }
