@@ -28,75 +28,95 @@ namespace MyGame
 
         public override ulong GetUpgradeCost()
         {
-            return Convert.ToUInt64(Math.Pow(Level, Config.KITCHEN_UPGRADE_EXP) * Config.KITCHEN_UPGRADE_COST);
+            return Convert.ToUInt64(Math.Pow(Level, Config.KITCHEN_UPGRADE_MONEY_COST_EXP) * Config.KITCHEN_UPGRADE_MONEY_COST);
         }
 
         public ulong GetWaterCost()
         {
-            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - water) * Config.KITCHEN_FOOD_COST_FOR_UNIT);
+            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - Convert.ToUInt64(water)) * Config.KITCHEN_FOOD_MONEY_COST_FOR_UNIT);
         }
 
         public ulong GetCoffeeCost()
         {
-            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - coffee) * Config.KITCHEN_FOOD_COST_FOR_UNIT);
+            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - Convert.ToUInt64(coffee)) * Config.KITCHEN_FOOD_MONEY_COST_FOR_UNIT);
         }
 
         public ulong GetSushiCost()
         {
-            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - sushi) * Config.KITCHEN_FOOD_COST_FOR_UNIT);
+            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - Convert.ToUInt64(sushi)) * Config.KITCHEN_FOOD_MONEY_COST_FOR_UNIT);
         }
 
         public ulong GetPizzaCost()
         {
-            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - pizza) * Config.KITCHEN_FOOD_COST_FOR_UNIT);
+            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - Convert.ToUInt64(pizza)) * Config.KITCHEN_FOOD_MONEY_COST_FOR_UNIT);
         }
 
         public ulong GetCakeCost()
         {
-            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - cake) * Config.KITCHEN_FOOD_COST_FOR_UNIT);
+            return Convert.ToUInt64(((Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level) - Convert.ToUInt64(cake)) * Config.KITCHEN_FOOD_MONEY_COST_FOR_UNIT);
         }
 
 #nullable enable
-        public event Event<Kitchen>? WaterBought;
-        public event Event<Kitchen>? CoffeeBought;
-        public event Event<Kitchen>? SushiBought;
-        public event Event<Kitchen>? PizzaBought;
-        public event Event<Kitchen>? CakeBought;
+        public event EventWith1Object<Kitchen, int>? OnWaterBought;
+        public event EventWith1Object<Kitchen, int>? OnCoffeeBought;
+        public event EventWith1Object<Kitchen, int>? OnSushiBought;
+        public event EventWith1Object<Kitchen, int>? OnPizzaBought;
+        public event EventWith1Object<Kitchen, int>? OnCakeBought;
 #nullable disable
 
-        public void BuyWater()
+        public bool BuyWater()
         {
-            GameModel.Get().TakeMoney(GetWaterCost());
-            water = Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level;
-            WaterBought?.Invoke(this);
+            if (GameModel.Get().TakeMoney(GetWaterCost()))
+            {
+                water = Convert.ToInt32(Convert.ToUInt64(Config.KITCHEN_FOOD_COUNT_FOR_LEVEL) * Level);
+                OnWaterBought?.Invoke(this, water);
+                return true;
+            }
+            return false;
         }
 
-        public void BuyCoffee()
+        public bool BuyCoffee()
         {
-            GameModel.Get().TakeMoney(GetWaterCost());
-            coffee = Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level;
-            CoffeeBought?.Invoke(this);
+            if (GameModel.Get().TakeMoney(GetWaterCost()))
+            {
+                coffee = Convert.ToInt32(Convert.ToUInt64(Config.KITCHEN_FOOD_COUNT_FOR_LEVEL) * Level);
+                OnCoffeeBought?.Invoke(this, coffee);
+                return true;
+            }
+            return false;
         }
 
-        public void BuySushi()
+        public bool BuySushi()
         {
-            GameModel.Get().TakeMoney(GetWaterCost());
-            sushi = Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level;
-            SushiBought?.Invoke(this);
+            if (GameModel.Get().TakeMoney(GetWaterCost()))
+            {
+                sushi = Convert.ToInt32(Convert.ToUInt64(Config.KITCHEN_FOOD_COUNT_FOR_LEVEL) * Level);
+                OnSushiBought?.Invoke(this, sushi);
+                return true;
+            }
+            return false;
         }
 
-        public void BuyPizza()
+        public bool BuyPizza()
         {
-            GameModel.Get().TakeMoney(GetWaterCost());
-            pizza = Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level;
-            PizzaBought?.Invoke(this);
+            if (GameModel.Get().TakeMoney(GetWaterCost()))
+            {
+                pizza = Convert.ToInt32(Convert.ToUInt64(Config.KITCHEN_FOOD_COUNT_FOR_LEVEL) * Level);
+                OnPizzaBought?.Invoke(this, pizza);
+                return true;
+            }
+            return false;
         }
 
-        public void BuyCake()
+        public bool BuyCake()
         {
-            GameModel.Get().TakeMoney(GetWaterCost());
-            cake = Config.KITCHEN_FOOD_COUNT_FOR_LEVEL * Level;
-            CakeBought?.Invoke(this);
+            if (GameModel.Get().TakeMoney(GetWaterCost()))
+            {
+                cake = Convert.ToInt32(Convert.ToUInt64(Config.KITCHEN_FOOD_COUNT_FOR_LEVEL) * Level);
+                OnCakeBought?.Invoke(this, cake);
+                return true;
+            }
+            return false;
         }
 
         public float GetWaterModifier()
@@ -106,7 +126,7 @@ namespace MyGame
                 water--;
                 return Config.KITCHEN_ENOUGH_FOOD_MODIFIER;
             }
-            return Config.KITCHEN_NOT_ENOUGH__FOODMODIFIER;
+            return Config.KITCHEN_NOT_ENOUGH_FOOD_MODIFIER;
         }
 
         public float GetCoffeeModifier()
@@ -116,7 +136,7 @@ namespace MyGame
                 coffee--;
                 return Config.KITCHEN_ENOUGH_FOOD_MODIFIER;
             }
-            return Config.KITCHEN_NOT_ENOUGH__FOODMODIFIER;
+            return Config.KITCHEN_NOT_ENOUGH_FOOD_MODIFIER;
         }
 
         public float GetSushiModifier()
@@ -126,7 +146,7 @@ namespace MyGame
                 sushi--;
                 return Config.KITCHEN_ENOUGH_FOOD_MODIFIER;
             }
-            return Config.KITCHEN_NOT_ENOUGH__FOODMODIFIER;
+            return Config.KITCHEN_NOT_ENOUGH_FOOD_MODIFIER;
         }
 
         public float GetPizzaModifier()
@@ -136,7 +156,7 @@ namespace MyGame
                 pizza--;
                 return Config.KITCHEN_ENOUGH_FOOD_MODIFIER;
             }
-            return Config.KITCHEN_NOT_ENOUGH__FOODMODIFIER;
+            return Config.KITCHEN_NOT_ENOUGH_FOOD_MODIFIER;
         }
 
         public float GetCakeModifier()
@@ -146,7 +166,12 @@ namespace MyGame
                 cake--;
                 return Config.KITCHEN_ENOUGH_FOOD_MODIFIER;
             }
-            return Config.KITCHEN_NOT_ENOUGH__FOODMODIFIER;
+            return Config.KITCHEN_NOT_ENOUGH_FOOD_MODIFIER;
+        }
+
+        public override string ToString()
+        {
+            return "Kitchen";
         }
     }
 }

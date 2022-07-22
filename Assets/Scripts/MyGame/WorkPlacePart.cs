@@ -23,7 +23,7 @@ namespace MyGame
             this.type = type;
         }
 
-        public WorkplacePart(WorkplacePartType type, byte level) : base(level)
+        public WorkplacePart(WorkplacePartType type, ulong level) : base(level)
         {
             this.type = type;
         }
@@ -41,7 +41,12 @@ namespace MyGame
 
         public override ulong GetUpgradeCost()
         {
-            return Convert.ToUInt64(Math.Pow(level, Config.WORKPLACE_PART_UPGRADE_EXP) * Config.WORKPLACE_PART_UPGRADE_COST);
+            return Convert.ToUInt64(Math.Pow(level, Config.WORKPLACE_PART_UPGRADE_MONEY_COST_EXP) * Config.WORKPLACE_PART_UPGRADE_MONEY_COST);
+        }
+
+        public override string ToString()
+        {
+            return type.ToString();
         }
     }
 }

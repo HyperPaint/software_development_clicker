@@ -44,11 +44,11 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     {
         Office office = GameModel.Get().Offices[0];
         List<Order> orders = office.Orders;
-        office.OrderAdded += OrderAdded;
-        office.OrderDeleted += OrderDeleted;
+        office.OnOrderAdded += OrderAdded;
+        office.OnOrderDeleted += OrderDeleted;
         foreach (Order obj in orders)
         {
-            obj.OrderUpdated += OrderUpdated;
+            obj.OnOrderUpdated += OrderUpdated;
         }
         Dataset = orders;
     }
@@ -56,7 +56,7 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     private void OrderAdded(Office sender, Order obj1, int obj2)
     {
         ViewInserted(obj2);
-        obj1.OrderUpdated += OrderUpdated;
+        obj1.OnOrderUpdated += OrderUpdated;
     }
 
     private void OrderUpdated(Order sender)

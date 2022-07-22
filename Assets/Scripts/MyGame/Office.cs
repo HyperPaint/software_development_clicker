@@ -5,8 +5,8 @@ namespace MyGame
 {
     public class Office : Upgradeable
     {
-        private Unit[] units;
-        public Unit[] Units { get => units; }
+        private List<Unit> units;
+        public List<Unit> Units { get => units; }
         private List<Order> orders;
         public List<Order> Orders { get => orders; }
         private Kitchen kitchen;
@@ -17,20 +17,15 @@ namespace MyGame
         public OfficePart PartClimate { get => parts[(byte)OfficePart.OfficePartType.CLIMATE]; }
         public OfficePart PartMusic { get => parts[(byte)OfficePart.OfficePartType.MUSIC]; }
 
-        public Office() : this(new Unit[Config.OFFICE_UNITS_START_COUNT], new List<Order>(), new Kitchen(), new OfficePart[OfficePart.officePartTypeLength], Config.OFFICE_ORDERS_START_COUNT)
+        public Office() : this(new List<Unit>(), new List<Order>(), new Kitchen(), new OfficePart[OfficePart.officePartTypeLength], Config.OFFICE_ORDERS_START_COUNT)
         {
-            for (int i = 0; i < units.Length; i++)
-            {
-                units[i] = new Unit();
-            }
             for (byte i = 0; i < OfficePart.officePartTypeLength; i++)
             {
                 parts[i] = new OfficePart(i);
             }
-            AddNewOrders();
         }
 
-        public Office(Unit[] units, List<Order> orders, Kitchen kitchen, OfficePart[] parts, byte level) : base(level)
+        public Office(List<Unit> units, List<Order> orders, Kitchen kitchen, OfficePart[] parts, ulong level) : base(level)
         {
             this.units = units;
             this.orders = orders;
@@ -40,11 +35,37 @@ namespace MyGame
 
         public override ulong GetUpgradeCost()
         {
-            return Convert.ToUInt64(Math.Pow(level, Config.OFFICE_UPGRADE_EXP) * Config.OFFICE_UPGRADE_COST);
+            return Convert.ToUInt64(Math.Pow(level, Config.OFFICE_UPGRADE_MONEY_COST_EXP) * Config.OFFICE_UPGRADE_MONEY_COST);
+        }
+
+        public ulong GetUnitCost()
+        {
+            return Convert.ToUInt64(Math.Pow(units.Count, Config.UNIT_MONEY_COST_EXP) * Config.UNIT_MONEY_COST);
+        }
+
+#nullable enable
+        public event EventWith1Object<Office, Unit>? OnUnitBought;
+#nullable disable
+
+        public void BuyUnit(bool gameStart = false)
+        {
+            if (gameStart)
+            {
+                Unit buff = new Unit();
+                units.Add(buff);
+                OnUnitBought?.Invoke(this, buff);
+            }
+            else if (GameModel.Get().TakeMoney(GetUnitCost()))
+            {
+                Unit buff = new Unit();
+                units.Add(buff);
+                OnUnitBought?.Invoke(this, buff);
+            }
         }
 
         public void MakeWork()
         {
+            AddNewOrders();
             Works works = new Works();
             foreach (Unit unit in units)
             {
@@ -55,13 +76,24 @@ namespace MyGame
                 order.TransferWork(ref works);
             }
             DeleteCompletedOrders();
-            AddNewOrders();
         }
 
 #nullable enable
-        public event EventWith2Object<Office, Order, int>? OrderAdded;
-        public event EventWith2Object<Office, Order, int>? OrderDeleted;
+        public event EventWith2Object<Office, Order, int>? OnOrderAdded;
+        public event EventWith2Object<Office, Order, int>? OnOrderDeleted;
 #nullable disable
+
+        private void AddNewOrders()
+        {
+            OrderFactory factory = OrderFactory.Get();
+            while (orders.Count < Convert.ToInt32(level))
+            {
+                Order buff = factory.Create();
+                int i = orders.Count;
+                orders.Add(buff);
+                OnOrderAdded?.Invoke(this, buff, i);
+            }
+        }
 
         private void DeleteCompletedOrders()
         {
@@ -71,24 +103,12 @@ namespace MyGame
                 {
                     Order buff = orders[i];
                     orders.RemoveAt(i);
-                    OrderDeleted?.Invoke(this, buff, i);
+                    OnOrderDeleted?.Invoke(this, buff, i);
                 }
                 else
                 {
                     i++;
                 }
-            }
-        }
-
-        private void AddNewOrders()
-        {
-            OrderFactory factory = OrderFactory.Get();
-            while (orders.Count < level)
-            {
-                Order buff = factory.Create();
-                int i = orders.Count;
-                orders.Add(buff);
-                OrderAdded?.Invoke(this, buff, i);
             }
         }
 
@@ -100,6 +120,16 @@ namespace MyGame
                 value *= parts[i].GetModifier();
             }
             return value;
+        }
+
+        public static ulong GetCost()
+        {
+            return Convert.ToUInt64(Math.Pow(GameModel.Get().Offices.Count, Config.OFFICE_MONEY_COST_EXP) * Config.OFFICE_MONEY_COST);
+        }
+
+        public override string ToString()
+        {
+            return "Office";
         }
     }
 }

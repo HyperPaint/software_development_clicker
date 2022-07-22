@@ -27,5 +27,10 @@ namespace MyGame
             }
             return works;
         }
+
+        public override string ToString()
+        {
+            return "Unit";
+        }
     }
 }

@@ -5,7 +5,7 @@ namespace MyGame
     public class Workplace : Clickable
     {
         private Worker worker;
-        public Worker Worker { get => worker; set => worker = value; }
+        public Worker Worker { get => worker; internal set => worker = value; }
 
         private WorkplacePart[] parts;
         public WorkplacePart[] Parts { get => parts; }
@@ -25,6 +25,45 @@ namespace MyGame
         {
             this.worker = worker;
             this.parts = parts;
+        }
+
+        public override void Click()
+        {
+            if (worker != null)
+            {
+                base.Click();
+            }
+        }
+
+#nullable enable
+        public event EventWith1Object<Workplace, Worker>? OnWorkerBought;
+#nullable disable
+
+        public void BuyWorker(Worker worker, bool gameStart = false)
+        {
+            if (gameStart)
+            {
+                this.worker = worker;
+                OnWorkerBought?.Invoke(this, worker);
+            }
+            else if (GameModel.Get().TakeMoney(worker.GetCost()))
+            {
+                this.worker = worker;
+                OnWorkerBought?.Invoke(this, worker);
+            }
+        }
+
+#nullable enable
+        public event EventWith1Object<Workplace, Worker>? OnWorkerDismiss;
+#nullable disable
+
+        public void DismissWorker()
+        {
+            Worker buff = worker;
+            worker = null;
+            OnWorkerDismiss?.Invoke(this, worker);
+
+            GameModel.Get().DecreaseReputation(Config.WORKER_REPUTATION_CHANGE_ON_DISMISS);
         }
 
         public Works MakeWork(Kitchen kitchen, float modifiers)
@@ -71,6 +110,11 @@ namespace MyGame
                 value *= parts[i].GetModifier();
             }
             return value;
+        }
+
+        public override string ToString()
+        {
+            return "Workplace";
         }
     }
 }

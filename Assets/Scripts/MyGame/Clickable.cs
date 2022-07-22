@@ -23,12 +23,17 @@ namespace MyGame
             this.clicks = clicks;
         }
 
+#nullable enable
+        public event EventWith1Object<Clickable, int>? OnClick;
+#nullable disable
+
         public virtual void Click()
         {
             const float max = Config.CLICKABLE_CLICKS_MAX;
             if (clicks < max)
             {
                 clicks++;
+                OnClick?.Invoke(this, Convert.ToInt32(clicks));
             }
         }
 
@@ -85,7 +90,6 @@ namespace MyGame
                     clicks -= Config.CLICKABLE_POWER_NONE_CLICK_CONSUMING_MODIFIER;
                 }
                 return Config.CLICKABLE_POWER_NONE_MODIFIER;
-
             }
         }
     }

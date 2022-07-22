@@ -49,14 +49,16 @@ namespace MyGame
         public string LastName { get => lastName; }
         private string nickName;
         public string NickName { get => nickName; set => nickName = value; }
-        private byte skill;
-        public byte Skill { get => skill; }
+        private ulong skill;
+        public ulong Skill { get => skill; }
         private string summary;
         public string Summary { get => summary; }
+        private ulong experience;
+        public ulong Experience { get => experience; }
 
-        public Worker() : this(EmployeeType.FULLSTACK, EmployeeFood.WATER, EmployeeFeature.NONE, "", "", "", 5, "") { }
+        public Worker() : this(EmployeeType.FULLSTACK, EmployeeFood.WATER, EmployeeFeature.NONE, "", "", "", 5, "", 0) { }
 
-        public Worker(EmployeeType type, EmployeeFood food, EmployeeFeature feature, string firstName, string lastName, string nickName, byte skill, string summary)
+        public Worker(EmployeeType type, EmployeeFood food, EmployeeFeature feature, string firstName, string lastName, string nickName, ulong skill, string summary, ulong experience)
         {
             this.type = type;
             this.food = food;
@@ -66,6 +68,7 @@ namespace MyGame
             this.nickName = nickName;
             this.skill = skill;
             this.summary = summary;
+            this.experience = experience;
         }
 
         public ulong MakeWork(Kitchen kitchen, float modifiers)
@@ -91,6 +94,8 @@ namespace MyGame
             };
             switch (feature)
             {
+                case EmployeeFeature.NONE:
+                    break;
                 case EmployeeFeature.STUDENT:
                     workValue *= Config.WORKER_STUDENT_WORK_MODIFIER;
                     break;
@@ -108,14 +113,43 @@ namespace MyGame
                 default:
                     throw new NotImplementedException();
             }
+            experience += Convert.ToUInt64(Math.Ceiling(workValue * Config.WORKER_EXPERIENCE_PER_WORK));
+            Upgrade();
             return Convert.ToUInt64(Math.Ceiling(workValue));
+        }
+
+        // todo не сериализовать при сохранении
+        private ulong experienceUpgradeCost = 0;
+
+#nullable enable
+        public event EventWith1Object<Worker, ulong>? OnSkillUpgraded;
+#nullable disable
+
+        private void Upgrade()
+        {
+            if (experienceUpgradeCost == 0)
+            {
+                experienceUpgradeCost = Convert.ToUInt64(Math.Pow(skill, Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST_EXP) * Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST);
+            }
+            if (experience >= experienceUpgradeCost)
+            {
+                if (skill != uint.MaxValue)
+                {
+                    experience -= experienceUpgradeCost;
+                    experienceUpgradeCost = Convert.ToUInt64(Math.Pow(skill, Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST_EXP) * Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST);
+                    skill++;
+                    OnSkillUpgraded?.Invoke(this, skill);
+                }
+            }
         }
 
         public ulong GetCost()
         {
-            float skillValue = Convert.ToSingle(Math.Pow(skill, Config.WORKER_SKILL_COST_EXP) * Config.WORKER_SKILL_COST);
+            float skillValue = Convert.ToSingle(Math.Pow(skill, Config.WORKER_SKILL_MONEY_COST_EXP) * Config.WORKER_SKILL_MONEY_COST);
             switch (feature)
             {
+                case EmployeeFeature.NONE:
+                    break;
                 case EmployeeFeature.STUDENT:
                     skillValue *= Config.WORKER_STUDENT_COST_MODIFIER;
                     break;
@@ -134,37 +168,17 @@ namespace MyGame
             return Convert.ToUInt64(skillValue);
         }
 
-
-
-        public ulong GetUpgradeCost()
+        public override string ToString()
         {
-            return (ulong)(Math.Pow(skill, Config.WORKER_UPGRADE_EXP) * Config.WORKER_UPGRADE_COST);
+            if (string.IsNullOrEmpty(nickName))
+            {
+                return firstName + " " + lastName;
+            }
+            else
+            {
+                return firstName + " '" + nickName + "' " + lastName;
+            }
         }
-
-#nullable enable
-    public event Event<Worker>? Upgraded;
-#nullable disable
-
-    public void Upgrade()
-    {
-        if (skill == byte.MaxValue)
-            throw new MaxLevelException();
-        GameModel.Get().TakeMoney(GetUpgradeCost());
-        skill++;
-        Upgraded?.Invoke(this);
-    }
-
-    public override string ToString()
-    {
-        if (string.IsNullOrEmpty(nickName))
-        {
-            return firstName + " " + lastName;
-        }
-        else
-        {
-            return firstName + " '" + nickName + "' " + lastName;
-        }
-    }
     }
 }
 

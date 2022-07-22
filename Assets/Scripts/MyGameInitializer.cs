@@ -15,7 +15,7 @@ public class MyGameInitializer : MonoBehaviour
     public byte level;
     public ulong money;
     public ulong premiumMoney;
-    public ulong reputation;
+    public long reputation;
 
     public int clicks;
 
@@ -35,11 +35,11 @@ public class MyGameInitializer : MonoBehaviour
                 synchronizationContext.Post(delegate
                 {
                     moneyText.text = gameModel.Money.ToString();
-                    premiumMoneyText.text = gameModel.PremiumMoney.ToString();
+                    premiumMoneyText.text = gameModel.Premium.ToString();
 
                     level = (byte)gameModel.Level;
                     money = gameModel.Money;
-                    premiumMoney = gameModel.PremiumMoney;
+                    premiumMoney = gameModel.Premium;
                     reputation = gameModel.Reputation;
                     clicks = gameModel.Offices[0].Units[0].Workplaces[0].Clicks;
                 }, null);

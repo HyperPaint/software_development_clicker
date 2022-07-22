@@ -1,4 +1,5 @@
 using MyGame;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
@@ -95,7 +96,10 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             {
                 views.Add(OnCreateView(prefab, content));
             }
-            ViewsUpdated();
+            for (int i = 0; i < dataset.Count; i++)
+            {
+                OnBindView(dataset[i], views[i], i);
+            }
         }, null);
     }
 
@@ -110,7 +114,11 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         {
             for (int i = 0; i < dataset.Count; i++)
             {
-                OnBindView(dataset[i], views[i], i);
+                try
+                {
+                    OnBindView(dataset[i], views[i], i);
+                }
+                catch (ArgumentOutOfRangeException) { }
             }
         }, null);
     }
@@ -122,14 +130,13 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <param name="position">Позиция компонента в наборе данных.</param>
     public void ViewUpdated(int position)
     {
-        synchronizationContext.Post(async delegate
+        synchronizationContext.Post(delegate
         {
-            // костыль
-            if (dataset.Count != views.Count)
+            try
             {
-                await Task.Delay(Config.BASE_ADAPTER_ANIMATION_TIME);
+                OnBindView(dataset[position], views[position], position);
             }
-            OnBindView(dataset[position], views[position], position);
+            catch (ArgumentOutOfRangeException) { }
         }, null);
     }
 
@@ -145,7 +152,11 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         {
             for (int i = from; i <= to; i++)
             {
-                OnBindView(dataset[i], views[i], i);
+                try
+                {
+                    OnBindView(dataset[i], views[i], i);
+                }
+                catch (ArgumentOutOfRangeException) { }
             }
         }, null);
     }

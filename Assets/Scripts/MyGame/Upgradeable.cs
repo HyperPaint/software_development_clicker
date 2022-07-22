@@ -2,29 +2,34 @@
 {
     public abstract class Upgradeable
     {
-        protected byte level;
-        public byte Level { get => level; }
+        protected ulong level;
+        public ulong Level { get => level; }
 
         public Upgradeable() : this(1)
         {
         }
 
-        public Upgradeable(byte level)
+        public Upgradeable(ulong level)
         {
             this.level = level;
         }
 
 #nullable enable
-        public event Event<Upgradeable>? Upgraded;
+        public event EventWith1Object<Upgradeable, ulong>? OnUpgraded;
 #nullable disable
 
         public abstract ulong GetUpgradeCost();
 
         public virtual void BuyUpgrade()
         {
-            GameModel.Get().TakeMoney(GetUpgradeCost());
-            level++;
-            Upgraded?.Invoke(this);
+            if (level < ulong.MaxValue)
+            {
+                if (GameModel.Get().TakeMoney(GetUpgradeCost()))
+                {
+                    level++;
+                    OnUpgraded?.Invoke(this, level);
+                }
+            }
         }
     }
 }

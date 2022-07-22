@@ -27,14 +27,14 @@ namespace MyGame
             this.type = type;
         }
 
-        public OfficePart(OfficePartType type, byte level) : base(level)
+        public OfficePart(OfficePartType type, ulong level) : base(level)
         {
             this.type = type;
         }
 
         public override ulong GetUpgradeCost()
         {
-            return Convert.ToUInt64(Math.Pow(level, Config.OFFICE_PART_UPGRADE_EXP) * Config.OFFICE_PART_UPGRADE_COST);
+            return Convert.ToUInt64(Math.Pow(level, Config.OFFICE_PART_UPGRADE_MONEY_COST_EXP) * Config.OFFICE_PART_UPGRADE_MONEY_COST);
         }
 
         public override float GetModifier()
@@ -46,6 +46,11 @@ namespace MyGame
                 OfficePartType.MUSIC => Config.OFFICE_PART_MUSIC_MODIFIER_PER_LEVEL,
                 _ => throw new NotImplementedException(),
             };
+        }
+
+        public override string ToString()
+        {
+            return type.ToString();
         }
     }
 }
