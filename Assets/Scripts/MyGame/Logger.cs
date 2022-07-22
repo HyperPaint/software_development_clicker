@@ -1,4 +1,4 @@
-using System.Threading;
+using System;
 using UnityEngine;
 
 namespace MyGame
@@ -7,106 +7,235 @@ namespace MyGame
     {
         private static object mutex = new();
 
-        /// <summary>
-        /// Контекст синхронизации, используется для выполнения кода в главном потоке.
-        /// </summary>
-        private static readonly SynchronizationContext synchronizationContext = SynchronizationContext.Current;
-
         public Logger(GameModel gameModel)
         {
-            gameModel.Upgraded += (sender) =>
+            gameModel.OnGameStageUpgraded += (sender) =>
             {
-                Log("Игровая модель улучшена до " + (sender as GameModel).Level.ToString());
+                Log("Игровая модель улучшена до " + sender.Level.ToString());
+            };
+
+            gameModel.OnMoneyPut += (sender, money, current) =>
+            {
+                Log("Валюта увеличена на " + money.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnMoneyTake += (sender, money, current) =>
+            {
+                Log("Валюта уменьшена на " + money.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnNotEnoughMoney += (sender, money, current) =>
+            {
+                Log("Валюты недостаточно " + money.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnPremiumPut += (sender, premium, current) =>
+            {
+                Log("Премиум валюта увеличена на " + premium.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnPremiumTake += (sender, premium, current) =>
+            {
+                Log("Премиум валюта уменьшена на " + premium.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnNotEnoughPremium += (sender, premium, current) =>
+            {
+                Log("Премиум валюты недостаточно " + premium.ToString() + " (" + current.ToString() + ")");
+            };
+
+            gameModel.OnReputationIncreased += (sender, reputation) =>
+            {
+                Log("Репутация увеличена (" + reputation + ")");
+            };
+
+            gameModel.OnReputationDecreased += (sender, reputation) =>
+            {
+                Log("Репутация уменьшена (" + reputation + ")");
             };
 
             foreach (var office in gameModel.Offices)
             {
-                office.Upgraded += (sender) =>
+                GameModelOfficeBind(gameModel, office);
+
+                foreach (var order in office.Orders)
                 {
-                    Log("Максимальное количество заказов офиса " + office.ToString() + " повышено до " + office.OrdersMaxCount.ToString());
-                };
+                    OrderBind(order);
+                }
 
                 foreach (var unit in office.Units)
                 {
-                    foreach (var part in unit.Parts)
+                    foreach (var workplace in unit.Workplaces)
                     {
-                        part.Upgraded += (sender) =>
+                        if (workplace.Worker != null)
                         {
-                            Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + " часть " + part.ToString() + " улучшена до " + part.Level.ToString());
-                        };
-                    }
-
-                    foreach (var workPlace in unit.WorkPlaces)
-                    {
-                        foreach (var part in workPlace.Parts)
-                        {
-                            part.Upgraded += (sender) =>
-                            {
-                                Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + ", в рабочем месте " + workPlace.ToString() + " часть " + part.ToString() + " улучшена до " + part.Level.ToString());
-                            };
+                            WorkerBind(workplace.Worker);
                         }
                     }
                 }
             }
 
-            OrderFactory.Get().OrderCreated += (factory, obj) =>
+            gameModel.OnOfficeBought += (sender, office) =>
             {
-                Order order = (Order)obj;
-                Log("Заказ \"" + order.ToString() + "\" создан");
-                order.DesigningCompleted += (sender) =>
-                {
-                    Log("Заказ \"" + order.Name + "\" проектирование завершено");
-                };
-                order.ArtCompleted += (sender) =>
-                {
-                    Log("Заказ \"" + order.Name + "\" дизайн завершен");
-                };
-                order.ProgrammingCompleted += (sender) =>
-                {
-                    Log("Заказ \"" + order.Name + "\" программирование завершено");
-                };
-                order.TestingCompleted += (sender) =>
-                {
-                    Log("Заказ \"" + order.Name + "\" тестирование завершено");
-                };
-                order.OrderCompleted += (sender) =>
-                {
-                    Log("Заказ \"" + order.Name + "\" завершен");
-                };
+                Log("Куплен офис " + office.ToString());
+                GameModelOfficeBind(sender, office);
             };
 
-            WorkerFactory.Get().WorkerCreated += (factory, obj) =>
+            OrderFactory.Get().OnOrderCreated += (factory, order) =>
             {
-                Worker worker = (Worker)obj;
+                Log("Заказ \"" + order.ToString() + "\" создан");
+                OrderBind(order);
+            };
+
+            WorkerFactory.Get().OnWorkerCreated += (factory, worker) =>
+            {
                 Log("Работник \"" + worker.ToString() + "\" создан");
-                worker.Upgraded += (sender) =>
+                WorkerBind(worker);
+            };
+        }
+
+        private void GameModelOfficeBind(GameModel gameModel, Office office)
+        {
+            office.OnUpgraded += (sender, level) =>
+            {
+                Log("Максимальное количество заказов офиса " + sender.ToString() + " повышено до " + level.ToString());
+            };
+
+            office.OnOrderAdded += (sender, order, position) =>
+            {
+                Log("В офисе " + sender.ToString() + " добавлен заказ " + order.ToString());
+            };
+
+            office.OnOrderDeleted += (sender, order, position) =>
+            {
+                Log("В офисе " + sender.ToString() + " удалён заказ " + order.ToString());
+            };
+
+            office.Kitchen.OnUpgraded += (sender, level) =>
+            {
+                Log("В офисе " + sender.ToString() + " улучшена кухня " + office.Kitchen.ToString());
+            };
+
+            office.Kitchen.OnWaterBought += (sender, count) =>
+            {
+                Log("В офисе " + office.ToString() + " на кухню " + sender.ToString() + " закуплена вода (" + count.ToString() + ")");
+            };
+
+            office.Kitchen.OnCoffeeBought += (sender, count) =>
+            {
+                Log("В офисе " + office.ToString() + " на кухню " + sender.ToString() + " закуплен кофе (" + count.ToString() + ")");
+            };
+
+            office.Kitchen.OnSushiBought += (sender, count) =>
+            {
+                Log("В офисе " + office.ToString() + " на кухню " + sender.ToString() + " закуплены суши (" + count.ToString() + ")");
+            };
+
+            office.Kitchen.OnPizzaBought += (sender, count) =>
+            {
+                Log("В офисе " + office.ToString() + " на кухню " + sender.ToString() + " закуплены пиццы (" + count.ToString() + ")");
+            };
+
+            office.Kitchen.OnCakeBought += (sender, count) =>
+            {
+                Log("В офисе " + office.ToString() + " на кухню " + sender.ToString() + " закуплены торты (" + count.ToString() + ")");
+            };
+
+            foreach (var part in office.Parts)
+            {
+                part.OnUpgraded += (sender, level) =>
                 {
-                    Log("Навык работника " + worker.ToString() + " улучшен до " + worker.Skill.ToString());
+                    Log("В офисе " + office.ToString() + " часть " + sender.ToString() + " улучшена до " + level);
                 };
+            }
+
+            foreach (var unit in office.Units)
+            {
+                OfficeUnitBind(office, unit);
+            }
+
+            office.OnUnitBought += (sender, unit) =>
+            {
+                Log("В офисе " + sender.ToString() + " куплена комната " + unit.ToString());
+                OfficeUnitBind(sender, unit);
+            };
+        }
+
+        private void OfficeUnitBind(Office office, Unit unit)
+        {
+            foreach (var workplace in unit.Workplaces)
+            {
+                workplace.OnClick += (sender, clicks) =>
+                {
+                    Log("В офисе " + office.ToString() + " в комнате " + unit.ToString() + " рабочее место " + sender.ToString() + " получило клик (" + clicks.ToString() + ")");
+                };
+
+                workplace.OnWorkerBought += (sender, worker) =>
+                {
+                    Log("В офисе " + office.ToString() + " на рабочее место " + sender.ToString() + " нанят работник " + worker.ToString());
+                };
+
+                foreach (var part in workplace.Parts)
+                {
+                    part.OnUpgraded += (sender, level) =>
+                    {
+                        Log("В офисе " + office.ToString() + ", в отделе " + unit.ToString() + ", в рабочем месте " + workplace.ToString() + " часть " + sender.ToString() + " улучшена до " + level.ToString());
+                    };
+                }
+            }
+        }
+
+        private void OrderBind(Order order)
+        {
+            order.OnDesigningCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" проектирование завершено");
+            };
+
+            order.OnArtCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" дизайн завершен");
+            };
+
+            order.OnProgrammingCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" программирование завершено");
+            };
+
+            order.OnTestingCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" тестирование завершено");
+            };
+
+            order.OnOrderCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" завершен");
+            };
+        }
+
+        private void WorkerBind(Worker worker)
+        {
+            worker.OnSkillUpgraded += (sender, skill) =>
+            {
+                Log("Работник " + worker.ToString() + " улучшил навык до " + skill.ToString());
             };
         }
 
         public void Log()
         {
-            synchronizationContext.Post(delegate
+            const string defaultError = "Произошло неожиданное событие.";
+            lock (mutex)
             {
-                const string defaultError = "Произошло неожиданное событие.";
-                lock (mutex)
-                {
-                    Debug.Log(defaultError);
-                }
-            }, null);
+                Debug.Log(defaultError);
+            }
         }
 
         public void Log(string message)
         {
-            synchronizationContext.Post(delegate
+            lock (mutex)
             {
-                lock (mutex)
-                {
-                    Debug.Log(message);
-                }
-            }, null);
+                Debug.Log(message);
+            }
         }
     }
 }

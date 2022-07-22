@@ -3,7 +3,7 @@ using UnityEngine;
 using MyGame;
 using UnityEngine.UI;
 
-public class ModelInitializer : MonoBehaviour
+public class MyGameInitializer : MonoBehaviour
 {
     private static object mutex = new();
     private GameModel gameModel;
@@ -15,12 +15,12 @@ public class ModelInitializer : MonoBehaviour
     public byte level;
     public ulong money;
     public ulong premiumMoney;
-    public ulong reputation;
+    public long reputation;
 
-    public byte clicks;
+    public int clicks;
 
     /// <summary>
-    ///  онтекст синхронизации, используетс¤ дл¤ выполнени¤ кода в главном потоке.
+    /// Контекст синхронизации, используетс¤ дл¤ выполнени¤ кода в главном потоке.
     /// </summary>
     private static readonly System.Threading.SynchronizationContext synchronizationContext = System.Threading.SynchronizationContext.Current;
 
@@ -35,17 +35,17 @@ public class ModelInitializer : MonoBehaviour
                 synchronizationContext.Post(delegate
                 {
                     moneyText.text = gameModel.Money.ToString();
-                    premiumMoneyText.text = gameModel.PremiumMoney.ToString();
+                    premiumMoneyText.text = gameModel.Premium.ToString();
 
                     level = (byte)gameModel.Level;
                     money = gameModel.Money;
-                    premiumMoney = gameModel.PremiumMoney;
+                    premiumMoney = gameModel.Premium;
                     reputation = gameModel.Reputation;
-                    clicks = gameModel.Offices[0].Units[0].WorkPlaces[0].Clicks;
+                    clicks = gameModel.Offices[0].Units[0].Workplaces[0].Clicks;
                 }, null);
             }
         };
-        timer.Interval = 500;
+        timer.Interval = 1000f / Config.Base.GAME_SPEED;
         timer.Start();
     }
 

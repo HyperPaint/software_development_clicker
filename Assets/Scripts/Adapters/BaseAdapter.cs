@@ -1,9 +1,10 @@
-using System.Timers;
+using MyGame;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Threading.Tasks;
-using System;
 
 /// <summary>
 /// Базовый типизированный класс адаптера.
@@ -95,7 +96,10 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             {
                 views.Add(OnCreateView(prefab, content));
             }
-            ViewsUpdated();
+            for (int i = 0; i < dataset.Count; i++)
+            {
+                OnBindView(dataset[i], views[i], i);
+            }
         }, null);
     }
 
@@ -110,7 +114,11 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         {
             for (int i = 0; i < dataset.Count; i++)
             {
-                OnBindView(dataset[i], views[i], i);
+                try
+                {
+                    OnBindView(dataset[i], views[i], i);
+                }
+                catch (ArgumentOutOfRangeException) { }
             }
         }, null);
     }
@@ -122,14 +130,13 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <param name="position">Позиция компонента в наборе данных.</param>
     public void ViewUpdated(int position)
     {
-        synchronizationContext.Post(async delegate
+        synchronizationContext.Post(delegate
         {
-            // костыль
-            if (dataset.Count != views.Count)
+            try
             {
-                await Task.Delay(animationTime);
+                OnBindView(dataset[position], views[position], position);
             }
-            OnBindView(dataset[position], views[position], position);
+            catch (ArgumentOutOfRangeException) { }
         }, null);
     }
 
@@ -145,16 +152,14 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         {
             for (int i = from; i <= to; i++)
             {
-                OnBindView(dataset[i], views[i], i);
+                try
+                {
+                    OnBindView(dataset[i], views[i], i);
+                }
+                catch (ArgumentOutOfRangeException) { }
             }
         }, null);
     }
-
-    private const byte animationTicks = 30;
-    private const int animationWaitTime = 500;
-    private const int animationTime = 1000;
-    private const float animationTickValue = 1f / animationTicks;
-    private const int animationTickTime = animationTime / animationTicks;
 
     /// <summary>
     /// Сообщает адаптеру, что на указанную позицию (начало или конец списка) добавлен компонент в набор данных.
@@ -177,15 +182,15 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             scale.y = 0f;
             view.gameObject.transform.localScale = scale;
         }, null);
-        await Task.Delay(animationWaitTime);
+        await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
         synchronizationContext.Post(delegate
         {
             OnBindView(dataset[position], view, position);
             // анимация
-            byte currentTicks = animationTicks;
+            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
             Timer timer = null;
             timer = new Timer();
-            timer.Interval = animationTickTime;
+            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
             timer.Elapsed += delegate
             {
                 synchronizationContext.Post(delegate
@@ -193,8 +198,8 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
                     if (currentTicks > 0)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
-                        scale.x += animationTickValue;
-                        scale.y += animationTickValue;
+                        scale.x += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
+                        scale.y += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     }
@@ -220,13 +225,13 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         VIEW view = views[position];
         views.RemoveAt(position);
         // анимация
-        await Task.Delay(animationWaitTime);
+        await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
         synchronizationContext.Post(delegate
         {
-            byte currentTicks = animationTicks;
+            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
             Timer timer = null;
             timer = new Timer();
-            timer.Interval = animationTickTime;
+            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
             timer.Elapsed += delegate
             {
                 synchronizationContext.Post(delegate
@@ -234,8 +239,8 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
                     if (currentTicks > 0)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
-                        scale.x -= animationTickValue;
-                        scale.y -= animationTickValue;
+                        scale.x -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
+                        scale.y -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                     }

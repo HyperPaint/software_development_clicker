@@ -5,6 +5,6 @@ public class FirstWorkPlaceClick : MonoBehaviour
 {
     public void Click()
     {
-        GameModel.Get().Offices[0].Units[0].WorkPlaces[0].Click();
+        GameModel.Get().Offices[0].Units[0].Workplaces[0].Click();
     }
 }
