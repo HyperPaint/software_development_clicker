@@ -90,8 +90,9 @@ public class ExampleAdapter : BaseAdapter<Example, ExampleAdapter.ExampleView>
     /// <summary>
     /// Опциональная функция для инициализации <see cref="ExampleAdapter"/>. 
     /// </summary>
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         List<Example> list = new List<Example>();
         list.Add(new Example(1));
         list.Add(new Example(2));

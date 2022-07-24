@@ -5,28 +5,25 @@ using UnityEngine.UI;
 
 public class MyGameInitializer : MonoBehaviour
 {
-    private static object mutex = new();
     private GameModel gameModel;
-    private Timer timer = new Timer();
+    private Timer timer;
 
-    public Text moneyText;
-    public Text premiumMoneyText;
-
-    public byte level;
-    public ulong money;
-    public ulong premiumMoney;
-    public long reputation;
-
-    public int clicks;
+    [SerializeField] public Text moneyText;
+    [SerializeField] public Text premiumText;
 
     /// <summary>
     /// Контекст синхронизации, используетс¤ дл¤ выполнени¤ кода в главном потоке.
     /// </summary>
-    private static readonly System.Threading.SynchronizationContext synchronizationContext = System.Threading.SynchronizationContext.Current;
+    private System.Threading.SynchronizationContext synchronizationContext;
+    private object mutex;
 
     private void Start()
     {
+        synchronizationContext = System.Threading.SynchronizationContext.Current;
+        mutex = new();
+
         gameModel = GameModel.Get();
+        timer = new Timer();
         timer.Elapsed += delegate
         {
             lock (mutex)
@@ -35,18 +32,18 @@ public class MyGameInitializer : MonoBehaviour
                 synchronizationContext.Post(delegate
                 {
                     moneyText.text = gameModel.Money.ToString();
-                    premiumMoneyText.text = gameModel.Premium.ToString();
-
-                    level = (byte)gameModel.Level;
-                    money = gameModel.Money;
-                    premiumMoney = gameModel.Premium;
-                    reputation = gameModel.Reputation;
-                    clicks = gameModel.Offices[0].Units[0].Workplaces[0].Clicks;
+                    premiumText.text = gameModel.Premium.ToString();
                 }, null);
             }
         };
-        timer.Interval = 1000f / Config.Base.GAME_SPEED;
+        timer.Interval = Config.Base.GAME_SPEED_MS;
         timer.Start();
+    }
+
+    private void Update()
+    {
+        //moneyText.text = gameModel.Money.ToString();
+        //premiumText.text = gameModel.Premium.ToString();
     }
 
     private void OnApplicationQuit()

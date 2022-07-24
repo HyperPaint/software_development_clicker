@@ -4,7 +4,7 @@
     {
         public static class Base
         {
-            public const float GAME_SPEED = 30f;
+            public const float GAME_SPEED_MS = 1000f;
             public const float MODIFIER_BASE = 1f;
         }
 
@@ -119,7 +119,7 @@
         // UpgradeablePart --
 
         // Worker
-        public const float WORKER_WORK_PER_SKILL = 0.25f;
+        public const float WORKER_WORK_PER_SKILL = 1f;
 
         public const float WORKER_FULLSTACK_WORK_MODIFIER = 0.5f;
         public const float WORKER_DESIGNER_WORK_MODIFIER = 1f;

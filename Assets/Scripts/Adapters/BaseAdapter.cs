@@ -16,11 +16,11 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <summary>
     /// Префаб создаваемого объекта. Необходимо добавить через интерфейс Unity.
     /// </summary>
-    public RectTransform prefab;
+    [SerializeField] public RectTransform prefab;
     /// <summary>
     /// Контейнер для создаваемых объектов. Необходимо добавить через интерфейс Unity.
     /// </summary>
-    public RectTransform content;
+    [SerializeField] public RectTransform content;
 
     /// <summary>
     /// Базовый класс модели компонента интерфейса.
@@ -32,7 +32,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         /// <summary>
         /// Привязанный объект интерфейса Unity.
         /// </summary>
-        public GameObject gameObject;
+        [SerializeField] public GameObject gameObject;
 
         /// <summary>
         /// Конструктор с параметрами. Здесь необходимо инициализировать поля класса.
@@ -75,7 +75,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <summary>
     /// Контекст синхронизации, используется для выполнения кода в главном потоке.
     /// </summary>
-    private static readonly System.Threading.SynchronizationContext synchronizationContext = System.Threading.SynchronizationContext.Current;
+    protected System.Threading.SynchronizationContext synchronizationContext;
 
     /// <summary>
     /// Сообщает адаптеру, что набор данных полностью изменён.
@@ -273,4 +273,9 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <param name="view">Заранее созданный экземпляр класса <see cref="VIEW"/> с привязанными компонентами интерфейса.</param>
     /// <param name="position">Позиция компонента в наборе данных.</param>
     protected abstract void OnBindView(TYPE item, VIEW view, int position);
+
+    protected virtual void Start()
+    {
+        synchronizationContext = System.Threading.SynchronizationContext.Current;
+    }
 }

@@ -72,3 +72,7 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 ProjectSettings/ProjectVersion.txt
+
+# Builds
+/project_manager_simulator_BackUpThisFolder_ButDontShipItWithYourGame/
+/project_manager_simulator_BurstDebugInformation_DoNotShip/

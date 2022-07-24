@@ -1,6 +1,6 @@
 using MyGame;
-using System;
 using System.Collections.Generic;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,11 +8,11 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 {
     public class OrderView : View
     {
-        public Text name;
-        public Image designing;
-        public Image art;
-        public Image programming;
-        public Image testing;
+        [SerializeField] public Text name;
+        [SerializeField] public Image designing;
+        [SerializeField] public Image art;
+        [SerializeField] public Image programming;
+        [SerializeField] public Image testing;
         
         public OrderView(RectTransform prefab, RectTransform content) : base(prefab, content)
         {
@@ -34,14 +34,35 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     protected override void OnBindView(Order item, OrderView view, int position)
     {
         view.name.text = item.Name;
-        view.designing.fillAmount = Convert.ToSingle(item.Designing.current) / Convert.ToSingle(item.Designing.needed);
-        view.art.fillAmount = Convert.ToSingle(item.Art.current) / Convert.ToSingle(item.Art.needed);
-        view.programming.fillAmount = Convert.ToSingle(item.Programming.current) / Convert.ToSingle(item.Programming.needed);
-        view.testing.fillAmount = Convert.ToSingle(item.Testing.current) / Convert.ToSingle(item.Testing.needed);
+        byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
+        Timer timer = null;
+        timer = new Timer();
+        timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
+        timer.Elapsed += delegate
+        {
+            synchronizationContext.Post(delegate
+            {
+                if (currentTicks > 0)
+                {
+                    view.designing.fillAmount = Mathf.Lerp(view.designing.fillAmount, item.Designing.Percent, Time.deltaTime);
+                    view.art.fillAmount = Mathf.Lerp(view.art.fillAmount, item.Art.Percent, Time.deltaTime);
+                    view.programming.fillAmount = Mathf.Lerp(view.programming.fillAmount, item.Programming.Percent, Time.deltaTime);
+                    view.testing.fillAmount = Mathf.Lerp(view.testing.fillAmount, item.Testing.Percent, Time.deltaTime);
+                }
+                else
+                {
+                    timer.Stop();
+                    timer = null;
+                }
+                currentTicks--;
+            }, null);
+        };
+        timer.Start();
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         Office office = GameModel.Get().Offices[0];
         List<Order> orders = office.Orders;
         office.OnOrderAdded += OrderAdded;
