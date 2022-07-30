@@ -33,90 +33,70 @@ namespace MyGame
 
         private WorkerFactory() { }
 
-        private readonly string[] firstNames = {
-            "Шарж",
-            "Абрикос",
-            "Шарик",
-            "Банзай",
-            "Шашлык",
-        };
-
-        private readonly string[] lastNames = {
-            "Адонис",
-            "Витязь",
-            "Шарль",
-            "Эрос",
-            "Арамис",
-        };
-
-        private readonly string[] nickNames =
-        {
-            "Vanya567",
-            "Ripering",
-            "Evil_Biscuit",
-            "Gendalf[BY]",
-            "Xincerrie",
-            "Slediks",
-            "Taske",
-            "Di4_Feyter",
-            "Fearo",
-            "Bicker",
-            "Cyrus",
-        };
-
 #nullable enable
-        public event EventObject<WorkerFactory, Worker>? WorkerCreated;
+        public event EventWith1Object<WorkerFactory, Worker>? OnWorkerCreated;
 #nullable disable
 
-        public Worker Create()
+        public Worker Create(bool useReputation = true)
         {
             Random random = GameModel.Random;
             Worker.EmployeeType employeeType = (Worker.EmployeeType)random.Next(0, Worker.employeeTypeLength - 1);
-            Worker.EmployeeBoost employeeBoost = (Worker.EmployeeBoost)random.Next(0, Worker.employeeBoostLength - 1);
+            Worker.EmployeeFood employeeBoost = (Worker.EmployeeFood)random.Next(0, Worker.employeeBoostLength - 1);
             Worker.EmployeeFeature employeeFeature = (Worker.EmployeeFeature)random.Next(0, Worker.employeeFeatureLength - 1);
-            string firstName = firstNames[random.Next(0, firstNames.Length - 1)];
-            string lastName = lastNames[random.Next(0, lastNames.Length - 1)];
-            string nickName = nickNames[random.Next(0, nickNames.Length - 1)];
-            // todo должно зависеть от репутации
-            byte skill = (byte)random.Next();
-            string summary = "Здесь должна быть краткая забавная история работника";
+            string firstName = Config.WORKER_FACTORY_WORKER_FIRST_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_FIRST_NAME.Length - 1)];
+            string lastName = Config.WORKER_FACTORY_WORKER_LAST_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_LAST_NAME.Length - 1)];
+            string nickName = Config.WORKER_FACTORY_WORKER_NICK_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_NICK_NAME.Length - 1)];
+            ulong skillStart = Config.WORKER_FACTORY_WORKER_SKILL_START, skillEnd = Config.WORKER_FACTORY_WORKER_SKILL_END;
+            if (useReputation)
+            {
+                long reputationModifier = Convert.ToInt64(GameModel.Get().Reputation * Config.WORKER_FACTORY_WORKER_SKILL_REPUTATION_MODIFIER);
+                if (reputationModifier >= 0)
+                {
+                    skillStart += Convert.ToUInt64(reputationModifier);
+                    skillEnd += Convert.ToUInt64(reputationModifier);
+                }
+                else
+                {
+                    skillEnd = Config.WORKER_FACTORY_WORKER_SKILL_END;
+                }
+            }
+            ulong skill = Convert.ToUInt64(random.Next(Convert.ToInt32(skillStart), Convert.ToInt32(skillEnd)));
+            string summary = Config.WORKER_FACTORY_WORKER_SUMMARY[random.Next(0, Config.WORKER_FACTORY_WORKER_SUMMARY.Length - 1)];
+            ulong experience = 0;
 
-            Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary);
-            WorkerCreated?.Invoke(this, worker);
+            Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary, experience);
+            OnWorkerCreated?.Invoke(this, worker);
             return worker;
         }
 
-        public Worker Create(Worker.EmployeeType employeeType)
+        public Worker Create(Worker.EmployeeType employeeType, bool useReputation = true)
         {
             Random random = GameModel.Random;
-            Worker.EmployeeBoost employeeBoost = (Worker.EmployeeBoost)random.Next(0, Worker.employeeBoostLength - 1);
+            Worker.EmployeeFood employeeBoost = (Worker.EmployeeFood)random.Next(0, Worker.employeeBoostLength - 1);
             Worker.EmployeeFeature employeeFeature = (Worker.EmployeeFeature)random.Next(0, Worker.employeeFeatureLength - 1);
-            string firstName = firstNames[random.Next(0, firstNames.Length - 1)];
-            string lastName = lastNames[random.Next(0, lastNames.Length - 1)];
-            string nickName = nickNames[random.Next(0, nickNames.Length - 1)];
-            // todo должно зависеть от репутации
-            // todo необходимо уменьшить как было
-            byte skill = 150;
-            string summary = "Здесь должна быть краткая забавная история работника";
+            string firstName = Config.WORKER_FACTORY_WORKER_FIRST_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_FIRST_NAME.Length - 1)];
+            string lastName = Config.WORKER_FACTORY_WORKER_LAST_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_LAST_NAME.Length - 1)];
+            string nickName = Config.WORKER_FACTORY_WORKER_NICK_NAME[random.Next(0, Config.WORKER_FACTORY_WORKER_NICK_NAME.Length - 1)];
+            ulong skillStart = Config.WORKER_FACTORY_WORKER_SKILL_START, skillEnd = Config.WORKER_FACTORY_WORKER_SKILL_END;
+            if (useReputation)
+            {
+                long reputationModifier = Convert.ToInt64(GameModel.Get().Reputation * Config.WORKER_FACTORY_WORKER_SKILL_REPUTATION_MODIFIER);
+                if (reputationModifier >= 0)
+                {
+                    skillStart += Convert.ToUInt64(reputationModifier);
+                    skillEnd += Convert.ToUInt64(reputationModifier);
+                }
+                else
+                {
+                    skillEnd = Config.WORKER_FACTORY_WORKER_SKILL_END;
+                }
+            }
+            ulong skill = Convert.ToUInt64(random.Next(Convert.ToInt32(skillStart), Convert.ToInt32(skillEnd)));
+            string summary = Config.WORKER_FACTORY_WORKER_SUMMARY[random.Next(0, Config.WORKER_FACTORY_WORKER_SUMMARY.Length - 1)];
+            ulong experience = 0;
 
-            Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary);
-            WorkerCreated?.Invoke(this, worker);
-            return worker;
-        }
-
-        public Worker Create(Worker.EmployeeType employeeType, Worker.EmployeeFeature employeeFeature)
-        {
-            Random random = GameModel.Random;
-            Worker.EmployeeBoost employeeBoost = (Worker.EmployeeBoost)random.Next(0, Worker.employeeBoostLength - 1);
-            string firstName = firstNames[random.Next(0, firstNames.Length - 1)];
-            string lastName = lastNames[random.Next(0, lastNames.Length - 1)];
-            string nickName = nickNames[random.Next(0, nickNames.Length - 1)];
-            // todo должно зависеть от репутации
-            byte skill = 5;
-            string summary = "Здесь должна быть краткая забавная история работника";
-
-            Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary);
-            WorkerCreated?.Invoke(this, worker);
+            Worker worker = new Worker(employeeType, employeeBoost, employeeFeature, firstName, lastName, nickName, skill, summary, experience);
+            OnWorkerCreated?.Invoke(this, worker);
             return worker;
         }
     }

@@ -1,66 +1,52 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyGame
 {
-    public class WorkPlacePart : UpgradeablePart
+    public class WorkplacePart : UpgradeablePart
     {
         public const byte workPlacePartTypeLength = 3;
 
-        public enum WorkPlacePartType : byte
+        public enum WorkplacePartType : byte
         {
             TABLE,
             CHAIR,
             COMPUTER,
         }
 
-        private WorkPlacePartType type;
-        public WorkPlacePartType Type { get => type; }
+        private WorkplacePartType type;
+        public WorkplacePartType Type { get => type; }
 
-        public WorkPlacePart(byte type) : this((WorkPlacePartType)type) { }
+        public WorkplacePart(byte type) : this((WorkplacePartType)type) { }
 
-        public WorkPlacePart(WorkPlacePartType type) : base()
+        public WorkplacePart(WorkplacePartType type) : base()
         {
             this.type = type;
         }
 
-        public WorkPlacePart(WorkPlacePartType type, byte level) : base(level)
+        public WorkplacePart(WorkplacePartType type, ulong level) : base(level)
         {
             this.type = type;
         }
-
-        private static readonly float TABLE_WORK_MODIFIER_PER_LEVEL = 0.05f;
-        private static readonly float CHAIR_WORK_MODIFIER_PER_LEVEL = 0.10f;
-        private static readonly float COMPUTER_WORK_MODIFIER_PER_LEVEL = 0.15f;
 
         public override float GetModifier()
         {
-            return 1f + level * type switch
+            return Config.Base.MODIFIER_BASE + level * type switch
             {
-                WorkPlacePartType.TABLE => TABLE_WORK_MODIFIER_PER_LEVEL,
-                WorkPlacePartType.CHAIR => CHAIR_WORK_MODIFIER_PER_LEVEL,
-                WorkPlacePartType.COMPUTER => COMPUTER_WORK_MODIFIER_PER_LEVEL,
+                WorkplacePartType.TABLE => Config.WORKPLACE_PART_TABLE_MODIFIER_PER_LEVEL,
+                WorkplacePartType.CHAIR => Config.WORKPLACE_PART_CHAIR_MODIFIER_PER_LEVEL,
+                WorkplacePartType.COMPUTER => Config.WORKPLACE_PART_COMPUTER_MODIFIER_PER_LEVEL,
                 _ => throw new NotImplementedException(),
             };
         }
 
-        private static readonly float UPGRADE_COST = 5;
-        private static readonly float UPGRADE_EXP = 3;
-
         public override ulong GetUpgradeCost()
         {
-            return (ulong)(Math.Pow(level, UPGRADE_EXP) * UPGRADE_COST);
+            return Convert.ToUInt64(Math.Pow(level, Config.WORKPLACE_PART_UPGRADE_MONEY_COST_EXP) * Config.WORKPLACE_PART_UPGRADE_MONEY_COST);
         }
 
-        private static readonly float UPGRADE_COST_PREMIUM = 5;
-        private static readonly float UPGRADE_EXP_PREMIUM = 3;
-
-        public override ulong GetUpgradePremiumCost()
+        public override string ToString()
         {
-            return (ulong)(Math.Pow(level, UPGRADE_EXP_PREMIUM) * UPGRADE_COST_PREMIUM);
+            return type.ToString();
         }
     }
 }

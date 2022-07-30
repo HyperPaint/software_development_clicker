@@ -17,7 +17,7 @@ namespace MyGame
 
         public const byte employeeBoostLength = 5;
 
-        public enum EmployeeBoost : byte
+        public enum EmployeeFood : byte
         {
             WATER,
             COFFEE,
@@ -39,8 +39,8 @@ namespace MyGame
 
         private EmployeeType type;
         public EmployeeType Type { get => type; }
-        private EmployeeBoost boost;
-        public EmployeeBoost Boost { get => boost; }
+        private EmployeeFood food;
+        public EmployeeFood Food { get => food; }
         private EmployeeFeature feature;
         public EmployeeFeature Feature { get => feature; }
         private string firstName;
@@ -49,168 +49,123 @@ namespace MyGame
         public string LastName { get => lastName; }
         private string nickName;
         public string NickName { get => nickName; set => nickName = value; }
-        private byte skill;
-        public byte Skill { get => skill; }
+        private ulong skill;
+        public ulong Skill { get => skill; }
         private string summary;
         public string Summary { get => summary; }
+        private ulong experience;
+        public ulong Experience { get => experience; }
 
-        public Worker() : this(EmployeeType.FULLSTACK, EmployeeBoost.WATER, EmployeeFeature.NONE, "", "", "", 255, "") { }
+        public Worker() : this(EmployeeType.FULLSTACK, EmployeeFood.WATER, EmployeeFeature.NONE, "", "", "", 5, "", 0) { }
 
-        public Worker(EmployeeType type, EmployeeBoost boost, EmployeeFeature feature, string firstName, string lastName, string nickName, byte skill, string summary)
+        public Worker(EmployeeType type, EmployeeFood food, EmployeeFeature feature, string firstName, string lastName, string nickName, ulong skill, string summary, ulong experience)
         {
             this.type = type;
-            this.boost = boost;
+            this.food = food;
             this.feature = feature;
             this.firstName = firstName;
             this.lastName = lastName;
             this.nickName = nickName;
             this.skill = skill;
             this.summary = summary;
+            this.experience = experience;
         }
 
-        private static readonly float WORK_PER_SKILL = 0.25f;
-        private static readonly float WORK_OFFICE_BOOST_MODIFIER = 1.1f;
-
-        private static readonly float FULLSTACK_WORK_MODIFIER = 0.5f;
-
-        private static readonly float STUDENT_WORK_MODIFIER = 0.5f;
-        private static readonly float SPECIALIST_WORK_MODIFIER = 2f;
-        private static readonly byte LAZY_WORK_CHANCE = 25;
-        private static readonly float LAZY_WORK_MODIFIER = 2f;
-        private static readonly byte CREATIVE_WORK_CHANCE = 25;
-        private static readonly float CREATIVE_WORK_MODIFIER = 2f;
-
-        public ulong MakeWork(ref OfficeKitchen kitchen, float modifiers)
+        public ulong MakeWork(Kitchen kitchen, float modifiers)
         {
-            float workValue = skill * modifiers * WORK_PER_SKILL;
-            if (Type == EmployeeType.FULLSTACK)
+            float workValue = skill * modifiers * Config.WORKER_WORK_PER_SKILL;
+            workValue *= type switch
             {
-                workValue *= FULLSTACK_WORK_MODIFIER;
-            }
-            switch (boost)
+                EmployeeType.FULLSTACK => Config.WORKER_FULLSTACK_WORK_MODIFIER,
+                EmployeeType.DESIGNER => Config.WORKER_DESIGNER_WORK_MODIFIER,
+                EmployeeType.ARTIST => Config.WORKER_ARTIST_WORK_MODIFIER,
+                EmployeeType.PROGRAMMER => Config.WORKER_PROGRAMMER_WORK_MODIFIER,
+                EmployeeType.TESTER => Config.WORKER_TESTER_WORK_MODIFIER,
+                _ => throw new NotImplementedException(),
+            };
+            workValue *= food switch
             {
-                case EmployeeBoost.WATER:
-                    workValue *= GetOfficeBoost(ref kitchen.water);
+                EmployeeFood.WATER => kitchen.GetWaterModifier(),
+                EmployeeFood.COFFEE => kitchen.GetCoffeeModifier(),
+                EmployeeFood.SUSHI => kitchen.GetSushiModifier(),
+                EmployeeFood.PIZZA => kitchen.GetPizzaModifier(),
+                EmployeeFood.CAKE => kitchen.GetCakeModifier(),
+                _ => throw new NotImplementedException(),
+            };
+            switch (feature)
+            {
+                case EmployeeFeature.NONE:
                     break;
-
-                case EmployeeBoost.COFFEE:
-                    workValue *= GetOfficeBoost(ref kitchen.coffee);
+                case EmployeeFeature.STUDENT:
+                    workValue *= Config.WORKER_STUDENT_WORK_MODIFIER;
                     break;
-
-                case EmployeeBoost.SUSHI:
-                    workValue *= GetOfficeBoost(ref kitchen.sushi);
+                case EmployeeFeature.SPECIALIST:
+                    workValue *= Config.WORKER_SPECIALIST_WORK_MODIFIER;
                     break;
-
-                case EmployeeBoost.PIZZA:
-                    workValue *= GetOfficeBoost(ref kitchen.pizza);
+                case EmployeeFeature.LAZY:
+                    if (GameModel.Random.Next(1, 100) <= Config.WORKER_LAZY_WORK_CHANCE)
+                        workValue *= Config.WORKER_LAZY_WORK_MODIFIER;
                     break;
-
-                case EmployeeBoost.CAKE:
-                    workValue *= GetOfficeBoost(ref kitchen.cake);
+                case EmployeeFeature.CREATIVE:
+                    if (GameModel.Random.Next(1, 100) <= Config.WORKER_CREATIVE_WORK_CHANCE)
+                        workValue *= Config.WORKER_CREATIVE_WORK_MODIFIER;
                     break;
-
                 default:
                     throw new NotImplementedException();
             }
-            return Feature switch
-            {
-                EmployeeFeature.NONE => (ulong)Math.Ceiling(workValue),
-                EmployeeFeature.STUDENT => (ulong)Math.Ceiling(workValue * STUDENT_WORK_MODIFIER),
-                EmployeeFeature.SPECIALIST => (ulong)Math.Ceiling(workValue * SPECIALIST_WORK_MODIFIER),
-                EmployeeFeature.LAZY => (byte)GameModel.Random.Next(1, 100) <= LAZY_WORK_CHANCE ? (ulong)Math.Ceiling(workValue * LAZY_WORK_MODIFIER) : (ulong)Math.Ceiling(workValue),
-                EmployeeFeature.CREATIVE => (byte)GameModel.Random.Next(1, 100) <= CREATIVE_WORK_CHANCE ? (ulong)Math.Ceiling(workValue / CREATIVE_WORK_MODIFIER) : (ulong)Math.Ceiling(workValue),
-                _ => throw new NotImplementedException(),
-            };
+            experience += Convert.ToUInt64(Math.Ceiling(workValue * Config.WORKER_EXPERIENCE_PER_WORK));
+            Upgrade();
+            return Convert.ToUInt64(Math.Ceiling(workValue));
         }
 
-        private float GetOfficeBoost(ref ulong boost)
+        // todo не сериализовать при сохранении
+        private ulong experienceUpgradeCost = 0;
+
+#nullable enable
+        public event EventWith1Object<Worker, ulong>? OnSkillUpgraded;
+#nullable disable
+
+        private void Upgrade()
         {
-            if (boost > 0)
+            if (experienceUpgradeCost == 0)
             {
-                boost--;
-                return WORK_OFFICE_BOOST_MODIFIER;
+                experienceUpgradeCost = Convert.ToUInt64(Math.Pow(skill, Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST_EXP) * Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST);
             }
-            else
+            if (experience >= experienceUpgradeCost)
             {
-                return 1f;
+                if (skill != uint.MaxValue)
+                {
+                    experience -= experienceUpgradeCost;
+                    experienceUpgradeCost = Convert.ToUInt64(Math.Pow(skill, Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST_EXP) * Config.WORKER_UPGRADE_SKILL_EXPERIENCE_COST);
+                    skill++;
+                    OnSkillUpgraded?.Invoke(this, skill);
+                }
             }
         }
-
-        private static readonly float STUDENT_COST_MODIFIER = 0.5f;
-        private static readonly float SPECIALIST_COST_MODIFIER = 2f;
-        private static readonly float LAZY_COST_MODIFIER = 0.66f;
-        private static readonly float CREATIVE_COST_MODIFIER = 1.33f;
-
-        private static readonly float SKILL_COST = 5;
-        private static readonly float SKILL_COST_EXP = 3;
 
         public ulong GetCost()
         {
-            float skillValue = (float)Math.Pow(Skill, SKILL_COST_EXP) * SKILL_COST;
-            return feature switch
+            float skillValue = Convert.ToSingle(Math.Pow(skill, Config.WORKER_SKILL_MONEY_COST_EXP) * Config.WORKER_SKILL_MONEY_COST);
+            switch (feature)
             {
-                EmployeeFeature.NONE => (ulong)skillValue,
-                EmployeeFeature.STUDENT => (ulong)(skillValue * STUDENT_COST_MODIFIER),
-                EmployeeFeature.SPECIALIST => (ulong)(skillValue * SPECIALIST_COST_MODIFIER),
-                EmployeeFeature.LAZY => (ulong)(skillValue * LAZY_COST_MODIFIER),
-                EmployeeFeature.CREATIVE => (ulong)(skillValue * CREATIVE_COST_MODIFIER),
-                _ => throw new NotImplementedException(),
-            };
-        }
-
-        private static readonly float SKILL_COST_PREMIUM = 5;
-        private static readonly float SKILL_COST_EXP_PREMIUM = 3;
-
-        public ulong GetPremiumCost()
-        {
-            float skillValue = (float)Math.Pow(Skill, SKILL_COST_EXP_PREMIUM) * SKILL_COST_PREMIUM;
-            return feature switch
-            {
-                EmployeeFeature.NONE => (ulong)skillValue,
-                EmployeeFeature.STUDENT => (ulong)(skillValue * STUDENT_COST_MODIFIER),
-                EmployeeFeature.SPECIALIST => (ulong)(skillValue * SPECIALIST_COST_MODIFIER),
-                EmployeeFeature.LAZY => (ulong)(skillValue * LAZY_COST_MODIFIER),
-                EmployeeFeature.CREATIVE => (ulong)(skillValue * CREATIVE_COST_MODIFIER),
-                _ => throw new NotImplementedException(),
-            };
-        }
-
-        private static readonly float UPGRADE_COST = 5;
-        private static readonly float UPGRADE_EXP = 3;
-
-        public ulong GetUpgradeCost()
-        {
-            return (ulong)(Math.Pow(skill, UPGRADE_EXP) * UPGRADE_COST);
-        }
-
-        private static readonly float UPGRADE_COST_PREMIUM = 5;
-        private static readonly float UPGRADE_EXP_PREMIUM = 3;
-
-        public ulong GetUpgradePremiumCost()
-        {
-            return (ulong)(Math.Pow(skill, UPGRADE_EXP_PREMIUM) * UPGRADE_COST_PREMIUM);
-        }
-
-#nullable enable
-        public event Event<Worker>? Upgraded;
-#nullable disable
-
-        public void Upgrade()
-        {
-            if (skill == byte.MaxValue)
-                throw new MaxLevelException();
-            GameModel.Get().TakeMoney(GetUpgradeCost());
-            skill++;
-            Upgraded?.Invoke(this);
-        }
-
-        public void UpgradePremium()
-        {
-            if (skill == byte.MaxValue)
-                throw new MaxLevelException();
-            GameModel.Get().TakePremiumMoney(GetUpgradePremiumCost());
-            skill++;
-            Upgraded?.Invoke(this);
+                case EmployeeFeature.NONE:
+                    break;
+                case EmployeeFeature.STUDENT:
+                    skillValue *= Config.WORKER_STUDENT_COST_MODIFIER;
+                    break;
+                case EmployeeFeature.SPECIALIST:
+                    skillValue *= Config.WORKER_SPECIALIST_COST_MODIFIER;
+                    break;
+                case EmployeeFeature.LAZY:
+                    skillValue *= Config.WORKER_LAZY_COST_MODIFIER;
+                    break;
+                case EmployeeFeature.CREATIVE:
+                    skillValue *= Config.WORKER_CREATIVE_COST_MODIFIER;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            return Convert.ToUInt64(skillValue);
         }
 
         public override string ToString()

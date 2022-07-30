@@ -7,7 +7,7 @@ namespace MyGame
     {
         private static object mutex = new();
         private static volatile GameModel model;
-        private static volatile Logger logger;
+        private readonly Logger logger;
 
         /// <summary>
         /// Функция для получения единственного объекта модели.
@@ -45,70 +45,82 @@ namespace MyGame
         public List<Office> Offices { get => offices; }
         private ulong money;
         public ulong Money { get => money; }
-        private ulong premiumMoney;
-        public ulong PremiumMoney { get => premiumMoney; }
-        private ulong reputation; // todo репутация не используется
-        public ulong Reputation { get => reputation; }
+        private ulong premium;
+        public ulong Premium { get => premium; }
+        private long reputation; // todo репутация не используется
+        public long Reputation { get => reputation; }
 
         private GameModel()
         {
-            logger = new Logger(this);
+            if (Config.LOGGER_ENABLED)
+            {
+                logger = new Logger(this);
+            }
 
             // загрузка игровых данных
 
             // игровых данных не найдено, начальные игровые данные
             level = GameStage.GARAGE;
-            offices.Add(new Office());
-            offices[0].Units[0].WorkPlaces[0].Worker = WorkerFactory.Get().Create(Worker.EmployeeType.FULLSTACK);
+            BuyOffice(true);
+            offices[0].BuyUnit(true);
+            offices[0].Units[0].Workplaces[0].BuyWorker(WorkerFactory.Get().Create(Worker.EmployeeType.FULLSTACK, false), true);
             money = 0;
-            premiumMoney = 100;
+            premium = 100;
+            reputation = 0;
+        }
+
+        public ulong GetUpgradeCost()
+        {
+            return Convert.ToUInt64(Math.Pow((double)level, Config.GAME_MODEL_UPGRADE_MONEY_COST_EXP) * Config.GAME_MODEL_UPGRADE_MONEY_COST);
+        }
+
+#nullable enable
+        public event Event<GameModel>? OnGameStageUpgraded;
+#nullable disable
+
+        public void BuyUpgrade()
+        {
+            if (level < GameStage.BUILDING)
+            {
+                TakeMoney(GetUpgradeCost());
+                level++;
+                OnGameStageUpgraded?.Invoke(this);
+                return;
+            }
+            throw new MaxLevelException();
+        }
+
+#nullable enable
+        public event EventWith1Object<GameModel, Office>? OnOfficeBought;
+#nullable disable
+
+        public void BuyOffice(bool gameStart = false)
+        {
+            if (gameStart)
+            {
+                Office buff = new Office();
+                offices.Add(buff);
+                OnOfficeBought?.Invoke(this, buff);
+            }
+            else if (TakeMoney(Office.GetCost()))
+            {
+                Office buff = new Office();
+                offices.Add(buff);
+                OnOfficeBought?.Invoke(this, buff);
+            }
         }
 
         public void MakeWork()
         {
             foreach (Office office in offices)
             {
-                office.MakeWork(1f);
+                office.MakeWork();
             }
         }
 
-        private static readonly float UPGRADE_COST = 5;
-        private static readonly float UPGRADE_EXP = 3;
-
-        public ulong GetUpgradeCost()
-        {
-            return (ulong)(Math.Pow((double)level, UPGRADE_EXP) * UPGRADE_COST);
-        }
-
-        private static readonly float UPGRADE_COST_PREMIUM = 5;
-        private static readonly float UPGRADE_EXP_PREMIUM = 3;
-
-        public ulong GetUpgradePremiumCost()
-        {
-            return (ulong)(Math.Pow((double)level, UPGRADE_EXP_PREMIUM) * UPGRADE_COST_PREMIUM);
-        }
-
 #nullable enable
-        public event Event<GameModel>? Upgraded;
+        public event EventWith2Object<GameModel, ulong, ulong>? OnMoneyPut;
 #nullable disable
-
-        public void Upgrade()
-        {
-            if (level == GameStage.GARAGE)
-                throw new MaxLevelException();
-            TakeMoney(GetUpgradeCost());
-            level++;
-            Upgraded?.Invoke(this);
-        }
-
-        public void UpgradePremium()
-        {
-            if (level == GameStage.GARAGE)
-                throw new MaxLevelException();
-            TakePremiumMoney(GetUpgradePremiumCost());
-            level++;
-            Upgraded?.Invoke(this);
-        }
 
         /// <summary>
         /// Функция для добавления валюты в банк.
@@ -117,7 +129,13 @@ namespace MyGame
         public void PutMoney(ulong money)
         {
             this.money += money;
+            OnMoneyPut?.Invoke(this, money, this.money);
         }
+
+#nullable enable
+        public event EventWith2Object<GameModel, ulong, ulong>? OnMoneyTake;
+        public event EventWith2Object<GameModel, ulong, ulong>? OnNotEnoughMoney;
+#nullable disable
 
         /// <summary>
         /// Функция для проверки и получения валюты из банка.
@@ -125,56 +143,87 @@ namespace MyGame
         /// При недостаточном балансе функция выбросит исключение.
         /// </summary>
         /// <param name="money">Необходимое количество валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
-        public void TakeMoney(ulong money)
+        /// <returns>Взята валюта?</returns>
+        public bool TakeMoney(ulong money)
         {
             if (this.money >= money)
             {
                 this.money -= money;
-                return;
+                OnMoneyTake?.Invoke(this, money, this.money);
+                return true;
             }
-            throw new NoMoneyException();
+            OnNotEnoughMoney?.Invoke(this, money - this.money, this.money);
+            return false;
         }
+
+#nullable enable
+        public event EventWith2Object<GameModel, ulong, ulong>? OnPremiumPut;
+#nullable disable
 
         /// <summary>
         /// Функция для добавления премиум валюты в банк.
         /// </summary>
-        /// <param name="money">Добавляемое количество премиум валюты</param>
-        public void PutPremiumMoney(ulong money)
+        /// <param name="premium">Добавляемое количество премиум валюты</param>
+        public void PutPremium(ulong premium)
         {
-            premiumMoney += money;
+            this.premium += premium;
+            OnPremiumPut?.Invoke(this, premium, this.premium);
         }
+
+#nullable enable
+        public event EventWith2Object<GameModel, ulong, ulong>? OnPremiumTake;
+        public event EventWith2Object<GameModel, ulong, ulong>? OnNotEnoughPremium;
+#nullable disable
 
         /// <summary>
         /// Функция для проверки и получения премиум валюты из банка.
         /// При достаточном балансе функция вернёт необходимое количество премиум валюты. 
         /// При недостаточном балансе функция выбросит исключение.
         /// </summary>
-        /// <param name="money">Необходимое количество премиум валюты</param>
-        /// <exception cref="NoMoneyException">Бросается при недостаточном балансе</exception>
-        public void TakePremiumMoney(ulong money)
+        /// <param name="premium">Необходимое количество премиум валюты</param>
+        /// <returns>Взята валюта?</returns>
+        public bool TakePremium(ulong premium)
         {
-            if (premiumMoney >= money)
+            if (this.premium >= premium)
             {
-                premiumMoney -= money;
-                return;
+                this.premium -= premium;
+                OnPremiumTake?.Invoke(this, premium, this.premium);
+                return true;
             }
-            throw new NoMoneyException();
+            OnNotEnoughPremium?.Invoke(this, premium - this.premium, this.premium);
+            return false;
         }
 
-        public void IncreaseReputation()
+#nullable enable
+        public event EventWith1Object<GameModel, long>? OnReputationIncreased;
+        public event EventWith1Object<GameModel, long>? OnReputationDecreased;
+#nullable disable
+
+        public void IncreaseReputation(long reputation)
         {
-            if (reputation < ulong.MaxValue)
+            if (this.reputation + reputation < long.MaxValue)
             {
-                reputation++;
+                this.reputation += reputation;
+                OnReputationIncreased?.Invoke(this, this.reputation);
+            }
+            else
+            {
+                this.reputation = long.MaxValue;
+                OnReputationIncreased?.Invoke(this, this.reputation);
             }
         }
 
-        public void DecreaseReputation()
+        public void DecreaseReputation(long reputation)
         {
-            if (reputation > 0)
+            if (this.reputation - reputation > long.MinValue)
             {
-                reputation--;
+                this.reputation -= reputation;
+                OnReputationDecreased?.Invoke(this, this.reputation);
+            }
+            else
+            {
+                this.reputation = long.MinValue;
+                OnReputationDecreased?.Invoke(this, this.reputation);
             }
         }
     }

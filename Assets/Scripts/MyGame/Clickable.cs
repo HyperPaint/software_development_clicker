@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MyGame
 {
     public class Clickable
     {
-        public enum Tired : byte
+        public enum Power : byte
         {
             NONE,
             EASY,
@@ -17,92 +13,83 @@ namespace MyGame
             HARD,
         }
 
-        protected byte clicks;
-        public byte Clicks { get => clicks; }
+        protected float clicks;
+        public int Clicks { get => Convert.ToInt32(clicks); }
 
         public Clickable() : this(0) { }
 
-        public Clickable(byte clicks)
+        public Clickable(int clicks)
         {
             this.clicks = clicks;
         }
 
-        public void Click()
+#nullable enable
+        public event EventWith1Object<Clickable, int>? OnClick;
+#nullable disable
+
+        public virtual void Click()
         {
-            if (clicks < byte.MaxValue)
+            const float max = Config.CLICKABLE_CLICKS_MAX;
+            if (clicks < max)
             {
                 clicks++;
+                OnClick?.Invoke(this, Convert.ToInt32(clicks));
             }
         }
 
-        public static readonly byte CLICKABLE_CLICKS_TIRED_NONE = 0;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_EASY = 1;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_NORMAL = 3;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_MEDIUM = 5;
-        public static readonly byte CLICKABLE_CLICKS_TIRED_HARD = 7;
-
-        public Tired GetTired()
+        public Power GetPower()
         {
-            if (clicks >= CLICKABLE_CLICKS_TIRED_HARD)
+            if (clicks >= Config.CLICKABLE_POWER_HARD)
             {
-                return Tired.HARD;
+                return Power.HARD;
             }
-            else if (clicks >= CLICKABLE_CLICKS_TIRED_MEDIUM)
+            else if (clicks >= Config.CLICKABLE_POWER_MEDIUM)
             {
-                return Tired.MEDIUM;
+                return Power.MEDIUM;
             }
-            else if (clicks >= CLICKABLE_CLICKS_TIRED_NORMAL)
+            else if (clicks >= Config.CLICKABLE_POWER_NORMAL)
             {
-                return Tired.NORMAL;
+                return Power.NORMAL;
             }
-            else if (clicks >= CLICKABLE_CLICKS_TIRED_EASY)
+            else if (clicks >= Config.CLICKABLE_POWER_EASY)
             {
-                return Tired.EASY;
+                return Power.EASY;
             }
             else
             {
-                return Tired.NONE;
+                return Power.NONE;
             }
         }
 
-        public static readonly float CLICKABLE_PER_CLICK_MODIDIER = 0.25f;
-
-        public static readonly float CLICKABLE_CLICKS_TIRED_NONE_MODIFIER = 1f;
-        public static readonly float CLICKABLE_CLICKS_TIRED_EASY_MODIFIER = 1.5f;
-        public static readonly float CLICKABLE_CLICKS_TIRED_NORMAL_MODIFIER = 2f;
-        public static readonly float CLICKABLE_CLICKS_TIRED_MEDIUM_MODIFIER = 2.5f;
-        public static readonly float CLICKABLE_CLICKS_TIRED_HARD_MODIFIER = 3f;
-
-        protected float GetClickModifier()
+        protected float GetClickableModifier()
         {
-            if (clicks > CLICKABLE_CLICKS_TIRED_HARD)
+            if (clicks >= Config.CLICKABLE_POWER_HARD)
             {
-                clicks -= Convert.ToByte(CLICKABLE_CLICKS_TIRED_HARD_MODIFIER);
-                return 1f + CLICKABLE_CLICKS_TIRED_HARD_MODIFIER * CLICKABLE_PER_CLICK_MODIDIER;
+                clicks -= Config.CLICKABLE_POWER_HARD_CLICK_CONSUMING_MODIFIER;
+                return Config.CLICKABLE_POWER_HARD_MODIFIER;
             }
-            else if (clicks > CLICKABLE_CLICKS_TIRED_MEDIUM)
+            else if (clicks >= Config.CLICKABLE_POWER_MEDIUM)
             {
-                clicks -= Convert.ToByte(CLICKABLE_CLICKS_TIRED_MEDIUM_MODIFIER);
-                return 1f + CLICKABLE_CLICKS_TIRED_MEDIUM_MODIFIER * CLICKABLE_PER_CLICK_MODIDIER;
+                clicks -= Config.CLICKABLE_POWER_MEDIUM_CLICK_CONSUMING_MODIFIER;
+                return Config.CLICKABLE_POWER_MEDIUM_MODIFIER;
             }
-            else if (clicks > CLICKABLE_CLICKS_TIRED_NORMAL)
+            else if (clicks >= Config.CLICKABLE_POWER_NORMAL)
             {
-                clicks -= Convert.ToByte(CLICKABLE_CLICKS_TIRED_NORMAL_MODIFIER);
-                return 1f + CLICKABLE_CLICKS_TIRED_NORMAL_MODIFIER * CLICKABLE_PER_CLICK_MODIDIER;
+                clicks -= Config.CLICKABLE_POWER_NORMAL_CLICK_CONSUMING_MODIFIER;
+                return Config.CLICKABLE_POWER_NORMAL_MODIFIER;
             }
-            else if (clicks > CLICKABLE_CLICKS_TIRED_EASY)
+            else if (clicks >= Config.CLICKABLE_POWER_EASY)
             {
-                clicks -= Convert.ToByte(CLICKABLE_CLICKS_TIRED_EASY_MODIFIER);
-                return 1f + CLICKABLE_CLICKS_TIRED_EASY_MODIFIER * CLICKABLE_PER_CLICK_MODIDIER;
-            }
-            else if (clicks > CLICKABLE_CLICKS_TIRED_NONE)
-            {
-                clicks -= Convert.ToByte(CLICKABLE_CLICKS_TIRED_NONE_MODIFIER);
-                return 1f + CLICKABLE_CLICKS_TIRED_NONE_MODIFIER * CLICKABLE_PER_CLICK_MODIDIER;
+                clicks -= Config.CLICKABLE_POWER_EASY_CLICK_CONSUMING_MODIFIER;
+                return Config.CLICKABLE_POWER_EASY_MODIFIER;
             }
             else
             {
-                return 1f;
+                if (clicks > 0f)
+                {
+                    clicks -= Config.CLICKABLE_POWER_NONE_CLICK_CONSUMING_MODIFIER;
+                }
+                return Config.CLICKABLE_POWER_NONE_MODIFIER;
             }
         }
     }

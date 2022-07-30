@@ -6,11 +6,6 @@ using System.Threading.Tasks;
 
 namespace MyGame
 {
-    public class NoMoneyException : Exception
-    {
-        public NoMoneyException() : base("Недостаточно валюты") { }
-    }
-
     public class MaxLevelException : Exception
     {
         public MaxLevelException() : base("Максимальный уровень достигнут") { }
