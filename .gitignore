@@ -1,7 +1,7 @@
 # This .gitignore file should be placed at the root of your Unity project directory
-#
+
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
-#
+
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -73,4 +73,8 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Project version
-ProjectSettings/ProjectVersion.txt
+/ProjectSettings/ProjectVersion.txt
+
+# Build
+project_manager_simulator_BurstDebugInformation_DoNotShip
+project_manager_simulator_BackUpThisFolder_ButDontShipItWithYourGame

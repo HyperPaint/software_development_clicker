@@ -824,7 +824,7 @@ GameObject:
   - component: {fileID: 931260750}
   - component: {fileID: 931260749}
   m_Layer: 5
-  m_Name: PremiumMoneyText
+  m_Name: PremiumText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1258,12 +1258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moneyText: {fileID: 266672213}
-  premiumMoneyText: {fileID: 931260749}
-  level: 0
-  money: 0
-  premiumMoney: 0
-  reputation: 0
-  clicks: 0
+  premiumText: {fileID: 931260749}
 --- !u!4 &1311442385
 Transform:
   m_ObjectHideFlags: 0
