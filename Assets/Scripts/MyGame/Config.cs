@@ -4,7 +4,7 @@
     {
         public static class Base
         {
-            public const float GAME_SPEED = 30f;
+            public const float GAME_SPEED = 1f;
             public const float MODIFIER_BASE = 1f;
         }
 
@@ -149,8 +149,8 @@
         public const long WORKER_REPUTATION_CHANGE_ON_DISMISS = -10;
 
         // WorkerFactory
-        public const ulong WORKER_FACTORY_WORKER_SKILL_START = 5;
-        public const ulong WORKER_FACTORY_WORKER_SKILL_END = 10;
+        public const ulong WORKER_FACTORY_WORKER_SKILL_START = 50;
+        public const ulong WORKER_FACTORY_WORKER_SKILL_END = 100;
         public const float WORKER_FACTORY_WORKER_SKILL_REPUTATION_MODIFIER = 1.1f;
 
         public static readonly string[] WORKER_FACTORY_WORKER_FIRST_NAME = {
