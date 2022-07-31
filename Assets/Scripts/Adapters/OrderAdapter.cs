@@ -1,6 +1,6 @@
 using MyGame;
-using System;
 using System.Collections.Generic;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,14 +34,35 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     protected override void OnBindView(Order item, OrderView view, int position)
     {
         view.name.text = item.Name;
-        view.designing.fillAmount = Convert.ToSingle(item.Designing.current) / Convert.ToSingle(item.Designing.needed);
-        view.art.fillAmount = Convert.ToSingle(item.Art.current) / Convert.ToSingle(item.Art.needed);
-        view.programming.fillAmount = Convert.ToSingle(item.Programming.current) / Convert.ToSingle(item.Programming.needed);
-        view.testing.fillAmount = Convert.ToSingle(item.Testing.current) / Convert.ToSingle(item.Testing.needed);
+        byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
+        Timer timer;
+        timer = new Timer();
+        timer.Elapsed += delegate
+        {
+            if (currentTicks-- > 0)
+            {
+                if (view.gameObject != null)
+                {
+                    synchronizationContext.Post(delegate
+                    {
+                        view.designing.fillAmount = Mathf.Lerp(view.designing.fillAmount, item.Designing.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
+                        view.art.fillAmount = Mathf.Lerp(view.art.fillAmount, item.Art.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
+                        view.programming.fillAmount = Mathf.Lerp(view.programming.fillAmount, item.Programming.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
+                        view.testing.fillAmount = Mathf.Lerp(view.testing.fillAmount, item.Testing.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
+                    }, null);
+                    return;
+                }
+            }
+            timer.Stop();
+            timer = null;
+        };
+        timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
+        timer.Start();
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         Office office = GameModel.Get().Offices[0];
         List<Order> orders = office.Orders;
         office.OnOrderAdded += OrderAdded;
@@ -51,6 +72,11 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
             obj.OnOrderUpdated += OrderUpdated;
         }
         Dataset = orders;
+    }
+
+    protected override void OnApplicationQuit()
+    {
+        base.OnApplicationQuit();
     }
 
     private void OrderAdded(Office sender, Order obj1, int obj2)

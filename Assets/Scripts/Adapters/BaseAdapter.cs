@@ -75,7 +75,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <summary>
     /// Контекст синхронизации, используется для выполнения кода в главном потоке.
     /// </summary>
-    private static readonly System.Threading.SynchronizationContext synchronizationContext = System.Threading.SynchronizationContext.Current;
+    protected static System.Threading.SynchronizationContext synchronizationContext;
 
     /// <summary>
     /// Сообщает адаптеру, что набор данных полностью изменён.
@@ -195,20 +195,17 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             {
                 synchronizationContext.Post(delegate
                 {
-                    if (currentTicks > 0)
+                    if (currentTicks-- > 0)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
                         scale.x += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         scale.y += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                        return;
                     }
-                    else
-                    {
-                        timer.Stop();
-                        timer = null;
-                    }
-                    currentTicks--;
+                    timer.Stop();
+                    timer = null;
                 }, null);
             };
             timer.Start();
@@ -243,13 +240,11 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
                         scale.y -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                        return;
                     }
-                    else
-                    {
-                        Destroy(view.gameObject);
-                        timer.Stop();
-                        timer = null;
-                    }
+                    Destroy(view.gameObject);
+                    timer.Stop();
+                    timer = null;
                     currentTicks--;
                 }, null);
             };
@@ -273,4 +268,14 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <param name="view">Заранее созданный экземпляр класса <see cref="VIEW"/> с привязанными компонентами интерфейса.</param>
     /// <param name="position">Позиция компонента в наборе данных.</param>
     protected abstract void OnBindView(TYPE item, VIEW view, int position);
+
+    protected virtual void Start()
+    {
+        synchronizationContext = System.Threading.SynchronizationContext.Current;
+    }
+
+    protected virtual void OnApplicationQuit()
+    {
+        
+    }
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace MyGame
 {
     public class Order
@@ -7,6 +9,8 @@ namespace MyGame
             public ulong current;
             public ulong needed;
             public bool completed;
+
+            public float Percent { get => Convert.ToSingle(current) / Convert.ToSingle(needed); }
 
             public Part(ulong current, ulong needed, bool completed)
             {
