@@ -1,4 +1,5 @@
 using MyGame;
+using System;
 using System.Collections.Generic;
 using System.Timers;
 using UnityEngine;
@@ -13,7 +14,7 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
         public Image art;
         public Image programming;
         public Image testing;
-        
+
         public OrderView(RectTransform prefab, RectTransform content) : base(prefab, content)
         {
             name = gameObject.transform.Find("NameBackground").Find("Name").GetComponent<Text>();
@@ -35,23 +36,24 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
     {
         view.name.text = item.Name;
         byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
+        float designing = (item.Designing.Percent - view.designing.fillAmount) / currentTicks;
+        float art = (item.Art.Percent - view.art.fillAmount) / currentTicks;
+        float programming = (item.Programming.Percent - view.programming.fillAmount) / currentTicks;
+        float testing = (item.Testing.Percent - view.testing.fillAmount) / currentTicks;
         Timer timer;
         timer = new Timer();
         timer.Elapsed += delegate
         {
-            if (currentTicks-- > 0)
+            if (--currentTicks > 0 && view.gameObject != null)
             {
-                if (view.gameObject != null)
+                synchronizationContext.Post(delegate
                 {
-                    synchronizationContext.Post(delegate
-                    {
-                        view.designing.fillAmount = Mathf.Lerp(view.designing.fillAmount, item.Designing.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
-                        view.art.fillAmount = Mathf.Lerp(view.art.fillAmount, item.Art.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
-                        view.programming.fillAmount = Mathf.Lerp(view.programming.fillAmount, item.Programming.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
-                        view.testing.fillAmount = Mathf.Lerp(view.testing.fillAmount, item.Testing.Percent, Config.BASE_ADAPTER_ANIMATION_TICK_VALUE);
-                    }, null);
-                    return;
-                }
+                    view.designing.fillAmount += designing;
+                    view.art.fillAmount += art;
+                    view.programming.fillAmount += programming;
+                    view.testing.fillAmount += testing;
+                }, null);
+                return;
             }
             timer.Stop();
             timer = null;
