@@ -192,14 +192,14 @@ namespace MyGame
                 Log("Заказ \"" + sender.Name + "\" проектирование завершено");
             };
 
-            order.OnArtCompleted += (sender) =>
-            {
-                Log("Заказ \"" + sender.Name + "\" дизайн завершен");
-            };
-
             order.OnProgrammingCompleted += (sender) =>
             {
                 Log("Заказ \"" + sender.Name + "\" программирование завершено");
+            };
+
+            order.OnTexturingCompleted += (sender) =>
+            {
+                Log("Заказ \"" + sender.Name + "\" текстурирование завершено");
             };
 
             order.OnTestingCompleted += (sender) =>
