@@ -9,19 +9,19 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 {
     public class OrderView : View
     {
-        public Text name;
+        public Text title;
         public Image designing;
-        public Image art;
+        public Image texturing;
         public Image programming;
         public Image testing;
 
         public OrderView(RectTransform prefab, RectTransform content) : base(prefab, content)
         {
-            name = gameObject.transform.Find("NameBackground").Find("Name").GetComponent<Text>();
-            designing = gameObject.transform.Find("BackGround (1)").Find("Designing_progress").GetComponent<Image>();
-            art = gameObject.transform.Find("BackGround (3)").Find("Art_progress").GetComponent<Image>();
-            programming = gameObject.transform.Find("BackGround").Find("Programming_progress").GetComponent<Image>();
-            testing = gameObject.transform.Find("BackGround (2)").Find("Testing_progress").GetComponent<Image>();
+            title = gameObject.transform.Find("Title").GetComponent<Text>();
+            designing = gameObject.transform.Find("Designing").GetComponent<Image>();
+            programming = gameObject.transform.Find("Programming").GetComponent<Image>();
+            texturing = gameObject.transform.Find("Texturing").GetComponent<Image>();
+            testing = gameObject.transform.Find("Testing").GetComponent<Image>();
         }
     }
 
@@ -34,10 +34,10 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
 
     protected override void OnBindView(Order item, OrderView view, int position)
     {
-        view.name.text = item.Name;
+        view.title.text = item.Name;
         byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
         float designing = (item.Designing.Percent - view.designing.fillAmount) / currentTicks;
-        float art = (item.Art.Percent - view.art.fillAmount) / currentTicks;
+        float art = (item.Texturing.Percent - view.texturing.fillAmount) / currentTicks;
         float programming = (item.Programming.Percent - view.programming.fillAmount) / currentTicks;
         float testing = (item.Testing.Percent - view.testing.fillAmount) / currentTicks;
         Timer timer;
@@ -49,7 +49,7 @@ public class OrderAdapter : BaseAdapter<Order, OrderAdapter.OrderView>
                 synchronizationContext.Post(delegate
                 {
                     view.designing.fillAmount += designing;
-                    view.art.fillAmount += art;
+                    view.texturing.fillAmount += art;
                     view.programming.fillAmount += programming;
                     view.testing.fillAmount += testing;
                 }, null);
