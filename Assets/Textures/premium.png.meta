@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Textures/premium.png.meta
 guid: 3a2ff9ed8a008354db234199fad3fc7c
+========
+guid: 9c296db9c997c734e8dd0455cfa3c1e9
+>>>>>>>> main:Assets/Textures/red.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

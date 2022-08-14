@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Textures/money.png.meta
 guid: cdb4ad5c26947d142ac075d1e8ce22aa
+========
+guid: a5655e6415938b34495e29a65071b3ac
+>>>>>>>> main:Assets/Textures/purple.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
