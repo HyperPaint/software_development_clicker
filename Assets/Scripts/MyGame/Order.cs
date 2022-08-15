@@ -35,7 +35,7 @@ namespace MyGame
         private ulong money;
         public ulong Money { get => money; }
         private ulong premium;
-        public ulong PremiumMoney { get => premium; }
+        public ulong Premium { get => premium; }
         private bool completed;
         public bool Completed { get => completed; }
 
