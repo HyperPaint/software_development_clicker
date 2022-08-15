@@ -52,7 +52,7 @@ public class ExampleAdapter : BaseAdapter<Example, ExampleAdapter.ExampleView>
         /// </summary>
         /// <param name="prefab">Префаб создаваемого объекта, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
         /// <param name="content">Контейнер для создаваемых объектов, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
-        public ExampleView(RectTransform prefab, RectTransform content) : base(prefab, content)
+        public ExampleView(RectTransform prefab, RectTransform content, Example item) : base(prefab, content)
         {
             // инициализация поля класса
             exampleText = gameObject.transform.Find("Byte").GetComponent<Text>();
@@ -70,9 +70,9 @@ public class ExampleAdapter : BaseAdapter<Example, ExampleAdapter.ExampleView>
     /// <param name="prefab">Префаб создаваемого объекта, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
     /// <param name="content">Контейнер для создаваемых объектов, используется в базовом классе. Необходимо добавить через интерфейс Unity.</param>
     /// <returns>Экземпляр класса <see cref="ExampleView"/>.</returns>
-    protected override ExampleView OnCreateView(RectTransform prefab, RectTransform content)
+    protected override ExampleView OnCreateView(RectTransform prefab, RectTransform content, Example item)
     {
-        return new ExampleView(prefab, content);
+        return new ExampleView(prefab, content, item);
     }
 
     /// <summary>

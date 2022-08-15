@@ -1,5 +1,4 @@
 using MyGame;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
@@ -94,7 +93,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
             views.Clear();
             foreach (TYPE item in dataset)
             {
-                views.Add(OnCreateView(prefab, content));
+                views.Add(OnCreateView(prefab, content, item));
             }
             for (int i = 0; i < dataset.Count; i++)
             {
@@ -157,54 +156,71 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     }
 
     /// <summary>
+    /// Список работающих таймеров.
+    /// Необходим для корректного освобождения ресурсов.
+    /// </summary>
+    private List<Timer> timers = new List<Timer>();
+
+    /// <summary>
     /// Сообщает адаптеру, что на указанную позицию (начало или конец списка) добавлен компонент в набор данных.
     /// </summary>
     /// <param name="position">Позиция компонента в наборе данных.</param>
-    /// <param name="setFirstSibling">Установить компонент интерфейса в начало списка?</param>
-    public async void ViewInserted(int position, bool setFirstSibling = false)
+    /// <param name="addToBegin">Установить компонент интерфейса в начало списка?</param>
+    public async void ViewInserted(int position, bool addToBegin = false)
     {
         VIEW view = null;
         synchronizationContext.Post(delegate
         {
-            view = OnCreateView(prefab, content);
+            view = OnCreateView(prefab, content, dataset[position]);
             views.Insert(position, view);
-            if (setFirstSibling)
+            if (addToBegin)
+            {
                 view.gameObject.transform.SetAsFirstSibling();
+            }
             else
+            {
                 view.gameObject.transform.SetAsLastSibling();
+            }
             Vector3 scale = view.gameObject.transform.localScale;
-            scale.x = 0f;
-            scale.y = 0f;
+            scale.x = scale.y = scale.z = 0f;
             view.gameObject.transform.localScale = scale;
             OnBindView(dataset[position], view, position);
         }, null);
         await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
         // анимация
-        synchronizationContext.Post(delegate
+        byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
+        Timer timer = null;
+        timer = new Timer();
+        lock (timers)
         {
-            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
-            Timer timer = null;
-            timer = new Timer();
-            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
-            timer.Elapsed += delegate
+            timers.Add(timer);
+        }
+        timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
+        timer.Elapsed += delegate
+        {
+            if (--currentTicks > 0 && view.gameObject != null)
             {
                 synchronizationContext.Post(delegate
                 {
-                    if (--currentTicks > 0 && view.gameObject != null)
+                    if (view.gameObject != null)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
-                        scale.x += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
-                        scale.y += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
+                        scale.x = scale.y = scale.z += Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-                        return;
                     }
-                    timer.Stop();
-                    timer = null;
                 }, null);
-            };
-            timer.Start();
-        }, null);
+            }
+            else
+            {
+                timer.Close();
+                lock (timers)
+                {
+                    timers.Remove(timer);
+                }
+            }
+        };
+        timer.Start();
     }
 
     /// <summary>
@@ -217,33 +233,48 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
         VIEW view = views[position];
         views.RemoveAt(position);
         await Task.Delay(Config.BASE_ADAPTER_ANIMATION_WAIT_TIME);
-        synchronizationContext.Post(delegate
+        // анимация
+        byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
+        Timer timer = null;
+        timer = new Timer();
+        lock (timers)
         {
-            // анимация
-            byte currentTicks = Config.BASE_ADAPTER_ANIMATION_TICKS;
-            Timer timer = null;
-            timer = new Timer();
-            timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
-            timer.Elapsed += delegate
+            timers.Add(timer);
+        }
+        timer.Interval = Config.BASE_ADAPTER_ANIMATION_TICK_TIME;
+        timer.Elapsed += delegate
+        {
+            if (--currentTicks > 0 && view.gameObject != null)
             {
                 synchronizationContext.Post(delegate
                 {
-                    if (--currentTicks > 0 && view.gameObject != null)
+                    if (view.gameObject != null)
                     {
                         Vector3 scale = view.gameObject.transform.localScale;
                         scale.x -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         scale.y -= Config.BASE_ADAPTER_ANIMATION_TICK_VALUE;
                         view.gameObject.transform.localScale = scale;
                         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-                        return;
                     }
-                    Destroy(view.gameObject);
-                    timer.Stop();
-                    timer = null;
                 }, null);
-            };
-            timer.Start();
-        }, null);
+            }
+            else
+            {
+                synchronizationContext.Post(delegate
+                {
+                    if (view.gameObject != null)
+                    {
+                        Destroy(view.gameObject);
+                    }
+                }, null);
+                timer.Close();
+                lock (timers)
+                {
+                    timers.Remove(timer);
+                }
+            }
+        };
+        timer.Start();
     }
 
     /// <summary>
@@ -252,7 +283,7 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
     /// <param name="prefab">Префаб создаваемого объекта. Необходимо добавить через интерфейс Unity.</param>
     /// <param name="content">Контейнер для создаваемых объектов. Необходимо добавить через интерфейс Unity.</param>
     /// <returns>Экземпляр класса <see cref="View"/>.</returns>
-    protected abstract VIEW OnCreateView(RectTransform prefab, RectTransform content);
+    protected abstract VIEW OnCreateView(RectTransform prefab, RectTransform content, TYPE item);
 
     /// <summary>
     /// Функция для наполнения интерфейса данными. Заполняет один компонент интерфейса одним экземпляром класса.
@@ -270,6 +301,9 @@ public abstract class BaseAdapter<TYPE, VIEW> : MonoBehaviour where VIEW : BaseA
 
     protected virtual void OnApplicationQuit()
     {
-        
+        foreach (Timer timer in timers)
+        {
+            timer.Close();
+        }
     }
 }
